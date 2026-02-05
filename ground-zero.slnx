@@ -1,2 +1,4 @@
 ﻿<Solution>
+  <Project Path="GroundZero.csproj" />
+  <Project Path="Tests.csproj" />
 </Solution>

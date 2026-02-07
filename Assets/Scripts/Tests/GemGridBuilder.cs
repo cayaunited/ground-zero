@@ -1,16 +1,22 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace GroundZero.Tests
 {
     public class GemGridBuilder
     {
         private int _size;
+        private int _typeCount;
         private List<List<int>> _indexes;
         
         public GemGridBuilder WithSize(int size)
         {
             _size = size;
+            return this;
+        }
+        
+        public GemGridBuilder WithTypeCount(int typeCount)
+        {
+            _typeCount = typeCount;
             return this;
         }
         
@@ -23,7 +29,7 @@ namespace GroundZero.Tests
         
         public GemGrid Build()
         {
-            var grid = new GemGrid(_size);
+            var grid = new GemGrid(_size, _typeCount);
             
             // If indexes has been set, fill the grid with the given indexes.
             if (_indexes != null)

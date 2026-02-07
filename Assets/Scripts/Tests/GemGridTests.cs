@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace GroundZero.Tests
@@ -404,6 +405,210 @@ namespace GroundZero.Tests
             Assert.AreEqual(new Vector2Int(0, 0), grid.MatchedGems[0]);
             Assert.AreEqual(new Vector2Int(1, 0), grid.MatchedGems[1]);
             Assert.AreEqual(new Vector2Int(2, 0), grid.MatchedGems[2]);
+        }
+        
+        [Test]
+        public void FillGrid_RandomlyFillsGridWithNoMatches()
+        {
+            const int size = 3;
+            const int gemTypeCount = 3;
+            GemGrid grid = A.GemGrid.WithSize(size).WithTypeCount(gemTypeCount);
+            
+            grid.FillGrid();
+            
+            // Ensure cells are not filled with -1.
+            Assert.AreNotEqual(-1, grid.GemIndexes[0][0]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[0][1]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[0][2]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[1][0]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[1][1]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[1][2]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][0]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][1]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][2]);
+            
+            var matchCount = grid.FindMatches();
+            Assert.Zero(matchCount);
+        }
+        
+        [Test]
+        public void ClearMatches_WithAMatch_ClearsMatchedGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 0 },
+                new() { 1, 2, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            grid.FindMatches();
+            
+            grid.ClearMatches();
+            
+            Assert.Zero(grid.MatchedGems.Count);
+            // Confirm the matched gems were cleared / reset to -1.
+            Assert.AreEqual(-1, grid.GemIndexes[0][0]);
+            Assert.AreEqual(-1, grid.GemIndexes[0][1]);
+            Assert.AreEqual(-1, grid.GemIndexes[0][2]);
+            // Then, confirm the other gems are still there.
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreEqual(0, grid.GemIndexes[2][0]);
+            Assert.AreEqual(1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(2, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void DropGems_WithNoEmptySpaces_DoesNotDropGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 0 },
+                new() { 1, 2, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            grid.DropGems();
+            
+            Assert.AreEqual(0, grid.DroppedGems.Count);
+            Assert.AreEqual(0, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreEqual(0, grid.GemIndexes[2][0]);
+            Assert.AreEqual(1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(2, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void DropGems_WithNoEmptySpacesBelow_DoesNotDropGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 0 },
+                new() { 1, 2, 1 },
+                new() { -1, -1, -1 }
+            });
+            
+            grid.DropGems();
+            
+            Assert.AreEqual(0, grid.DroppedGems.Count);
+            Assert.AreEqual(0, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreEqual(-1, grid.GemIndexes[2][0]);
+            Assert.AreEqual(-1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(-1, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void DropGems_WithEmptySpacesBelow_DropsGemsToLowestPossiblePosition()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { -1, -1, -1 },
+                new() { 1, -1, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            grid.DropGems();
+            
+            Assert.AreEqual(5, grid.DroppedGems.Count);
+            // Confirm the correct changes were made and tracked.
+            Assert.AreEqual(new Vector2Int(0, 0), grid.DroppedGems[new Vector2Int(0, 1)]);
+            Assert.AreEqual(new Vector2Int(0, 1), grid.DroppedGems[new Vector2Int(0, 2)]);
+            Assert.AreEqual(new Vector2Int(1, 0), grid.DroppedGems[new Vector2Int(1, 2)]);
+            Assert.AreEqual(new Vector2Int(2, 0), grid.DroppedGems[new Vector2Int(2, 1)]);
+            Assert.AreEqual(new Vector2Int(2, 1), grid.DroppedGems[new Vector2Int(2, 2)]);
+            // Confirm the grid was correctly updated.
+            Assert.AreEqual(1, grid.GemIndexes[0][0]);
+            Assert.AreEqual(1, grid.GemIndexes[0][1]);
+            Assert.AreEqual(1, grid.GemIndexes[0][2]);
+            Assert.AreEqual(0, grid.GemIndexes[1][0]);
+            Assert.AreEqual(-1, grid.GemIndexes[1][1]);
+            Assert.AreEqual(2, grid.GemIndexes[1][2]);
+            // The top positions should now be empty.
+            Assert.AreEqual(-1, grid.GemIndexes[2][0]);
+            Assert.AreEqual(-1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(-1, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void DropGems_AfterDropping_DoesNotDropMoreGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { -1, -1, -1 },
+                new() { 1, -1, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            grid.DropGems();
+            grid.DropGems();
+            
+            Assert.AreEqual(0, grid.DroppedGems.Count);
+        }
+        
+        [Test]
+        public void SpawnNewGems_WithNoEmptySpaces_DoesNotSpawnGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 0 },
+                new() { 1, 2, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            grid.SpawnNewGems();
+            
+            Assert.Zero(grid.SpawnedGems.Count);
+            Assert.AreEqual(0, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreEqual(0, grid.GemIndexes[2][0]);
+            Assert.AreEqual(1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(2, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void SpawnNewGems_WithEmptySpaces_SpawnsGemsInEmptySpaces()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 0 },
+                new() { 1, -1, 1 },
+                new() { -1, -1, -1 }
+            });
+            
+            grid.SpawnNewGems();
+            
+            Assert.AreEqual(4, grid.SpawnedGems.Count);
+            // Ensure gems were spawned at the right spots.
+            Assert.AreEqual(new Vector2Int(1, 1), grid.SpawnedGems[0]);
+            Assert.AreEqual(new Vector2Int(0, 2), grid.SpawnedGems[1]);
+            Assert.AreEqual(new Vector2Int(1, 2), grid.SpawnedGems[2]);
+            Assert.AreEqual(new Vector2Int(2, 2), grid.SpawnedGems[3]);
+            
+            Assert.AreEqual(0, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            // Since we can't know beforehand what gem type was selected,
+            // just make sure there was one selected.
+            Assert.AreNotEqual(-1, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][0]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][1]);
+            Assert.AreNotEqual(-1, grid.GemIndexes[2][2]);
         }
     }
 }

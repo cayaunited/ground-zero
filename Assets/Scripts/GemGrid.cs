@@ -8,8 +8,10 @@ namespace GroundZero
     /// </summary>
     public class GemGrid
     {
-        public static int MIN_MATCH_LENGTH = 3;
-        public static int MAX_MATCH_LENGTH = 5;
+        // Mark these constants as readonly and public static because
+        // they should never change and should be accessible from anywhere.
+        public static readonly int MIN_MATCH_LENGTH = 3;
+        public static readonly int MAX_MATCH_LENGTH = 5;
         
         /// <summary>
         /// The horizontal and vertical size of the grid in units.
@@ -19,12 +21,22 @@ namespace GroundZero
         /// <summary>
         /// The indexes of gem types in an array, where -1 means the spot is empty.
         /// 0 is the first gem type, 1 is the second, and so on.
+        /// Does not need to be set to a new list, so it should be readonly.
         /// </summary>
         public readonly List<List<int>> GemIndexes;
         /// <summary>
         /// The positions of any gems that were matched with others after calling FindMatches.
         /// </summary>
         public readonly List<Vector2Int> MatchedGems;
+        /// <summary>
+        /// The initial and final positions of any dropped gems after calling DropGems.
+        /// The key is the initial position, and the value is the final position.
+        /// </summary>
+        public readonly Dictionary<Vector2Int, Vector2Int> DroppedGems;
+        /// <summary>
+        /// The positions of any new gems that were spawned in after calling SpawnNewGems.
+        /// </summary>
+        public readonly List<Vector2Int> SpawnedGems;
         
         /// <summary>
         /// The positions in a row of matching gems to potentially be counted as matched.
@@ -35,14 +47,21 @@ namespace GroundZero
         /// The positions in a column of matching gems to potentially be counted as matched.
         /// </summary>
         private readonly List<Vector2Int> _potentialVerticalMatch;
+        /// <summary>
+        /// How many types of gems there are.
+        /// Only used internally and doesn't change, so private and readonly.
+        /// </summary>
+        private readonly int _gemTypeCount;
         
         /// <summary>
         /// Initializes the grid to be empty of gems.
         /// </summary>
         /// <param name="size">The horizontal and vertical size of the grid in units.</param>
-        public GemGrid(int size)
+        /// <param name="typeCount">How many types of gems there are.</param>
+        public GemGrid(int size, int typeCount)
         {
             Size = size;
+            _gemTypeCount = typeCount;
             
             // Create a list with a capacity equal to the number of rows in the grid.
             // Since there won't be any more items in the list than the number of rows,
@@ -67,9 +86,44 @@ namespace GroundZero
             // the number of rows times the number of columns,
             // since we know that at most all gems can be matched.
             MatchedGems = new List<Vector2Int>(capacity: Size * Size);
+            // The max number of gems that can drop is the whole grid, minus the bottom row.
+            // We don't need to set a capacity for lists or dictionaries,
+            // but it helps the computer if we already know the max size of the list or dictionary.
+            DroppedGems = new Dictionary<Vector2Int, Vector2Int>(capacity: Size * (Size - 1));
+            
+            SpawnedGems = new List<Vector2Int>(capacity: Size * Size);
             
             _potentialHorizontalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
             _potentialVerticalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
+        }
+        
+        /// <summary>
+        /// Randomly fills grid based on the number of gem types.
+        /// Checks for matches, and refills if there are any.
+        /// </summary>
+        public void FillGrid()
+        {
+            // There's no need to set a value here, since we'll do that below before using the value.
+            int matchedCount;
+            
+            // Randomly fill the grid first.
+            do
+            {
+                for (int y = 0; y < Size; y++)
+                {
+                    for (int x = 0; x < Size; x++)
+                    {
+                        // Fill each spot with a random index between 0 (inclusive)
+                        // and the number of gem types (exclusive).
+                        // For example, the value can be 0, 1, 2, 3, or 4 if the number of types is 5.
+                        GemIndexes[y][x] = Random.Range(0, _gemTypeCount);
+                    }
+                }
+                
+                // Then, check for matches and refill the grid if needed,
+                // repeating the process until there are no matches to start with.
+                matchedCount = FindMatches();
+            } while (matchedCount > 0);
         }
         
         /// <summary>
@@ -134,6 +188,71 @@ namespace GroundZero
         }
         
         /// <summary>
+        /// Removes any matched gems from the array, replacing their indexes with -1.
+        /// </summary>
+        public void ClearMatches()
+        {
+            foreach (var position in MatchedGems)
+            {
+                GemIndexes[position.y][position.x] = -1;
+            }
+            
+            MatchedGems.Clear();
+        }
+        
+        /// <summary>
+        /// Drops any gems that have empty space below them as far as they can fall.
+        /// Stores the resulting changes in DroppedGems.
+        /// </summary>
+        public void DropGems()
+        {
+            DroppedGems.Clear();
+            
+            // Start looking from one above the bottom, since the bottom can't fall,
+            // and we want to first drop the bottom-most gems.
+            for (int y = 1; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    var gemTypeIndex = GemIndexes[y][x];
+                    // Don't try to drop gems that don't exist.
+                    if (gemTypeIndex < 0) continue;
+                    
+                    var currentPosition = new Vector2Int(x, y);
+                    var dropPosition = FindLowestDropPosition(currentPosition);
+                    
+                    // If the gem dropped, make sure to add the change to the list,
+                    // and actually make the change in the grid, clearing the current position.
+                    if (dropPosition.y != currentPosition.y)
+                    {
+                        DroppedGems.Add(currentPosition, dropPosition);
+                        GemIndexes[dropPosition.y][x] = gemTypeIndex;
+                        GemIndexes[currentPosition.y][x] = -1;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Spawns new gems to fill in any empty spots.
+        /// Stores the results in SpawnedGems.
+        /// </summary>
+        public void SpawnNewGems()
+        {
+            SpawnedGems.Clear();
+            
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    if (GemIndexes[y][x] >= 0) continue;
+                    GemIndexes[y][x] = Random.Range(0, _gemTypeCount);
+                    SpawnedGems.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+        
+        /// <summary>
         /// Looks to see if there is a match starting from a certain point and in a certain direction.
         /// Stores the results in a potential match array to pick the longest between horizontal and vertical matches.
         /// </summary>
@@ -176,6 +295,26 @@ namespace GroundZero
             }
             
             return matchLength;
+        }
+        
+        /// <summary>
+        /// Returns the lowest position that the gem at the given position can drop to.
+        /// </summary>
+        /// <param name="currentPosition">The gem's current position.</param>
+        /// <returns>The position after dropping.</returns>
+        private Vector2Int FindLowestDropPosition(Vector2Int currentPosition)
+        {
+            // Start searching from one below the current position,
+            // since we know there's a gem at the current position.
+            for (int y = currentPosition.y - 1; y >= 0; y--)
+            {
+                // If the new position is taken, return the previous position in the loop.
+                if (GemIndexes[y][currentPosition.x] >= 0) return new Vector2Int(currentPosition.x, y + 1);
+            }
+            
+            // The loop made it through without finding any gems below,
+            // so drop the gem to the bottom.
+            return new Vector2Int(currentPosition.x, 0);
         }
     }
 }

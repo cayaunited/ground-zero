@@ -408,6 +408,32 @@ namespace GroundZero.Tests
         }
         
         [Test]
+        public void FindMatches_WithOneMatchFourAfterSwapping_CreatesSpecialGem()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 2, 0 },
+                new() { 1, 0, 0, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            
+            var matchCount = grid.FindMatches(createSpecialGems: true);
+            
+            Assert.AreEqual(4, matchCount);
+            Assert.AreEqual(4, grid.MatchedGems.Count);
+            Assert.AreEqual(new Vector2Int(0, 0), grid.MatchedGems[0]);
+            Assert.AreEqual(new Vector2Int(1, 0), grid.MatchedGems[1]);
+            Assert.AreEqual(new Vector2Int(2, 0), grid.MatchedGems[2]);
+            Assert.AreEqual(new Vector2Int(3, 0), grid.MatchedGems[3]);
+            // Ensure the right special gem was created at the right spot.
+            Assert.AreEqual(1, grid.SpecialGemsCreated.Count);
+            Assert.AreEqual(4, grid.SpecialGemsCreated[new Vector2Int(2, 0)]);
+        }
+        
+        [Test]
         public void FillGrid_RandomlyFillsGridWithNoMatches()
         {
             const int size = 3;
@@ -457,6 +483,31 @@ namespace GroundZero.Tests
             Assert.AreEqual(0, grid.GemIndexes[2][0]);
             Assert.AreEqual(1, grid.GemIndexes[2][1]);
             Assert.AreEqual(2, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void ClearMatches_WithASpecialGem_ClearsMatchExceptSpecialGem()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 2, 0 },
+                new() { 1, 0, 0, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.ClearMatches();
+            
+            Assert.AreEqual(1, grid.SpecialGemsCreated.Count);
+            Assert.AreEqual(4, grid.SpecialGemsCreated[new Vector2Int(2, 0)]);
+            Assert.AreEqual(-1, grid.GemIndexes[0][0]);
+            Assert.AreEqual(-1, grid.GemIndexes[0][1]);
+            // Ensure the 0 is still there, because that represents the special gem.
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(-1, grid.GemIndexes[0][3]);
         }
         
         [Test]

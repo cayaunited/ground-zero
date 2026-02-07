@@ -37,7 +37,18 @@ namespace GroundZero
         /// The positions of any new gems that were spawned in after calling SpawnNewGems.
         /// </summary>
         public readonly List<Vector2Int> SpawnedGems;
+        /// <summary>
+        /// The positions and types of any special gems created after a match.
+        /// The key is the position of the newly created special gem,
+        /// and the value is the length of the match, which dictates the type.
+        /// </summary>
+        public readonly Dictionary<Vector2Int, int> SpecialGemsCreated;
         
+        /// <summary>
+        /// The positions of the two gems that were swapped most recently.
+        /// Used for creating special gems at the correct position.
+        /// </summary>
+        private readonly Vector2Int[] _lastSwapPositions = new Vector2Int[2];
         /// <summary>
         /// The positions in a row of matching gems to potentially be counted as matched.
         /// Only used in finding matches and can be private so other classes don't see it.
@@ -61,6 +72,7 @@ namespace GroundZero
         public GemGrid(int size, int typeCount)
         {
             Size = size;
+            var maxGemCount = size * size;
             _gemTypeCount = typeCount;
             
             // Create a list with a capacity equal to the number of rows in the grid.
@@ -85,13 +97,14 @@ namespace GroundZero
             // Create a list for the position of matched gems with a capacity of
             // the number of rows times the number of columns,
             // since we know that at most all gems can be matched.
-            MatchedGems = new List<Vector2Int>(capacity: Size * Size);
+            MatchedGems = new List<Vector2Int>(capacity: maxGemCount);
             // The max number of gems that can drop is the whole grid, minus the bottom row.
             // We don't need to set a capacity for lists or dictionaries,
             // but it helps the computer if we already know the max size of the list or dictionary.
-            DroppedGems = new Dictionary<Vector2Int, Vector2Int>(capacity: Size * (Size - 1));
+            DroppedGems = new Dictionary<Vector2Int, Vector2Int>(capacity: maxGemCount - Size);
             
-            SpawnedGems = new List<Vector2Int>(capacity: Size * Size);
+            SpawnedGems = new List<Vector2Int>(capacity: maxGemCount);
+            SpecialGemsCreated = new Dictionary<Vector2Int, int>(capacity: maxGemCount);
             
             _potentialHorizontalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
             _potentialVerticalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
@@ -148,6 +161,8 @@ namespace GroundZero
             
             GemIndexes[position2.y][position2.x] = type1;
             GemIndexes[position1.y][position1.x] = type2;
+            _lastSwapPositions[0] = position1;
+            _lastSwapPositions[1] = position2;
             return true;
         }
         
@@ -155,12 +170,14 @@ namespace GroundZero
         /// Finds the positions of gems that are in a row or column with other gems of the same type.
         /// Stores the results in MatchedGems.
         /// </summary>
+        /// <param name="createSpecialGems">If true, create special gems while finding matches. If false, just find matches.</param>
         /// <returns>How many gems were matched.</returns>
-        public int FindMatches()
+        public int FindMatches(bool createSpecialGems = false)
         {
             // First, clear out the list of matched gems to make sure
             // the final list only has gems that are currently matched.
             MatchedGems.Clear();
+            SpecialGemsCreated.Clear();
             
             // Starting from the bottom left of the grid, look for horizontal and vertical matches.
             for (int y = 0; y < Size; y++)
@@ -179,6 +196,10 @@ namespace GroundZero
                     // Pick the longest match, if any, to use, then add those gems to the matched list.
                     var match = horizontalMatchLength >= verticalMatchLength ? _potentialHorizontalMatch : _potentialVerticalMatch;
                     MatchedGems.AddRange(match);
+                    
+                    // If we should create special gems, and the match length is long enough,
+                    // then create the special gem for this match.
+                    if (createSpecialGems && match.Count > MIN_MATCH_LENGTH) CreateSpecialGem(match);
                 }
             }
             
@@ -189,11 +210,13 @@ namespace GroundZero
         
         /// <summary>
         /// Removes any matched gems from the array, replacing their indexes with -1.
+        /// Does not remove any special gems that were created.
         /// </summary>
         public void ClearMatches()
         {
             foreach (var position in MatchedGems)
             {
+                if (SpecialGemsCreated.ContainsKey(position)) continue;
                 GemIndexes[position.y][position.x] = -1;
             }
             
@@ -295,6 +318,23 @@ namespace GroundZero
             }
             
             return matchLength;
+        }
+        
+        /// <summary>
+        /// Creates a special gem at the swapped position in a match,
+        /// or a random position if the match was created at a position outside of the swap.
+        /// </summary>
+        /// <param name="match">The positions of gems that were matched together.</param>
+        private void CreateSpecialGem(List<Vector2Int> match)
+        {
+            Vector2Int position;
+            var matchLength = match.Count;
+            
+            if (match.Contains(_lastSwapPositions[0])) position = _lastSwapPositions[0];
+            else if (match.Contains(_lastSwapPositions[1])) position = _lastSwapPositions[1];
+            else position = match[Random.Range(0, matchLength)];
+            
+            SpecialGemsCreated.Add(position, matchLength);
         }
         
         /// <summary>

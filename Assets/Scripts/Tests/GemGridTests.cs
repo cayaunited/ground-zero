@@ -105,6 +105,74 @@ namespace GroundZero.Tests
         }
         
         [Test]
+        public void SwapGems_WithFirstGemAsSpecial_SwapsSpecialGemPosition()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 1 },
+                new() { 2, 3 }
+            });
+            
+            var position1 = new Vector2Int(0, 0);
+            var position2 = new Vector2Int(0, 1);
+            
+            grid.SpecialGems.Add(position1, SpecialGemType.Explosive);
+            
+            grid.SwapGems(position1, position2);
+            
+            Assert.AreEqual(1, grid.SpecialGems.Count);
+            Assert.IsTrue(grid.SpecialGems.ContainsKey(position2));
+            Assert.AreEqual(SpecialGemType.Explosive, grid.SpecialGems[position2]);
+            Assert.IsFalse(grid.SpecialGems.ContainsKey(position1));
+        }
+        
+        [Test]
+        public void SwapGems_WithSecondGemAsSpecial_SwapsSpecialGemPosition()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 1 },
+                new() { 2, 3 }
+            });
+            
+            var position1 = new Vector2Int(0, 0);
+            var position2 = new Vector2Int(0, 1);
+            
+            grid.SpecialGems.Add(position2, SpecialGemType.Explosive);
+            
+            grid.SwapGems(position1, position2);
+            
+            Assert.AreEqual(1, grid.SpecialGems.Count);
+            Assert.IsTrue(grid.SpecialGems.ContainsKey(position1));
+            Assert.AreEqual(SpecialGemType.Explosive, grid.SpecialGems[position1]);
+            Assert.IsFalse(grid.SpecialGems.ContainsKey(position2));
+        }
+        
+        [Test]
+        public void SwapGems_WithBothGemsAsSpecial_SwapsSpecialGemPositions()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 1 },
+                new() { 2, 3 }
+            });
+            
+            var position1 = new Vector2Int(0, 0);
+            var position2 = new Vector2Int(0, 1);
+            
+            grid.SpecialGems.Add(position1, SpecialGemType.Explosive);
+            grid.SpecialGems.Add(position2, SpecialGemType.Targeting);
+            
+            grid.SwapGems(position1, position2);
+            
+            Assert.AreEqual(2, grid.SpecialGems.Count);
+            Assert.IsTrue(grid.SpecialGems.ContainsKey(position1));
+            Assert.AreEqual(SpecialGemType.Targeting, grid.SpecialGems[position1]);
+            Assert.IsTrue(grid.SpecialGems.ContainsKey(position2));
+            Assert.AreEqual(SpecialGemType.Explosive, grid.SpecialGems[position2]);
+        }
+        
+        [Test]
         public void FindMatches_WithNoMatches_FindsNothing()
         {
             GemGrid grid = A.GemGrid.WithGems(new()
@@ -431,6 +499,7 @@ namespace GroundZero.Tests
             // Ensure the right special gem was created at the right spot.
             Assert.AreEqual(1, grid.SpecialGemsCreated.Count);
             Assert.AreEqual(4, grid.SpecialGemsCreated[new Vector2Int(2, 0)]);
+            Assert.AreEqual(SpecialGemType.Explosive, grid.SpecialGems[new Vector2Int(2, 0)]);
         }
         
         [Test]
@@ -458,7 +527,28 @@ namespace GroundZero.Tests
         }
         
         [Test]
-        public void ClearMatches_WithAMatch_ClearsMatchedGems()
+        public void FillGrid_WithExistingSpecialGems_RandomlySpawnsNewSpecialGems()
+        {
+            const int size = 3;
+            const int gemTypeCount = 3;
+            GemGrid grid = A.GemGrid.WithSize(size).WithTypeCount(gemTypeCount);
+            grid.FillGrid();
+            
+            grid.SpecialGems.Add(new Vector2Int(0, 0), SpecialGemType.Explosive);
+            grid.SpecialGems.Add(new Vector2Int(1, 0), SpecialGemType.Explosive);
+            grid.SpecialGems.Add(new Vector2Int(0, 1), SpecialGemType.Targeting);
+            grid.SpecialGems.Add(new Vector2Int(1, 1), SpecialGemType.Targeting);
+            grid.SpecialGems.Add(new Vector2Int(2, 1), SpecialGemType.Targeting);
+            
+            grid.FillGrid();
+            
+            Assert.AreEqual(5, grid.SpecialGems.Count);
+            Assert.IsTrue(grid.SpecialGems.ContainsValue(SpecialGemType.Explosive));
+            Assert.IsTrue(grid.SpecialGems.ContainsValue(SpecialGemType.Targeting));
+        }
+        
+        [Test]
+        public void DestroyMatches_WithAMatch_ClearsMatchedGems()
         {
             GemGrid grid = A.GemGrid.WithGems(new()
             {
@@ -469,7 +559,7 @@ namespace GroundZero.Tests
             
             grid.FindMatches();
             
-            grid.ClearMatches();
+            grid.DestroyMatches();
             
             Assert.Zero(grid.MatchedGems.Count);
             // Confirm the matched gems were cleared / reset to -1.
@@ -486,7 +576,7 @@ namespace GroundZero.Tests
         }
         
         [Test]
-        public void ClearMatches_WithASpecialGem_ClearsMatchExceptSpecialGem()
+        public void DestroyMatches_WithASpecialGem_ClearsMatchExceptSpecialGem()
         {
             GemGrid grid = A.GemGrid.WithGems(new()
             {
@@ -499,7 +589,7 @@ namespace GroundZero.Tests
             grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
             grid.FindMatches(createSpecialGems: true);
             
-            grid.ClearMatches();
+            grid.DestroyMatches();
             
             Assert.AreEqual(1, grid.SpecialGemsCreated.Count);
             Assert.AreEqual(4, grid.SpecialGemsCreated[new Vector2Int(2, 0)]);
@@ -508,6 +598,223 @@ namespace GroundZero.Tests
             // Ensure the 0 is still there, because that represents the special gem.
             Assert.AreEqual(0, grid.GemIndexes[0][2]);
             Assert.AreEqual(-1, grid.GemIndexes[0][3]);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithAnExplosiveGemInsideBorder_DestroysSurroundingGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0, 1 },
+                new() { 0, 0, 2, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Explosive);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(10, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(1, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 2), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithAnExplosiveGemAtEdge_DestroysSurroundingGems()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 2, 1 },
+                new() { 1, 0, 0, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 1), SpecialGemType.Explosive);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(7, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(0, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithExplosiveGemsNextToEachOther_StartsExplosiveChain()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 0, 0, 2, 1 },
+                new() { 1, 0, 0, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Explosive);
+            grid.SpecialGems.Add(new Vector2Int(2, 1), SpecialGemType.Explosive);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(10, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(0, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 2), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithATargetingGem_DestroysGemsOfOtherType()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0, 1 },
+                new() { 0, 0, 2, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Targeting);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(8, grid.DestroyedGems.Count);
+            // Make sure the matched gems were destroyed.
+            Assert.Contains(new Vector2Int(0, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            // Make sure the targeted gems were destroyed.
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 3), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WhenSwappingTwoTargetingGems_DestroysGemsOfBothTypes()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0, 1 },
+                new() { 0, 0, 2, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Targeting);
+            grid.SpecialGems.Add(new Vector2Int(2, 1), SpecialGemType.Targeting);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(10, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(0, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            
+            Assert.Contains(new Vector2Int(1, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 3), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 3), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithATargetingGemDestroyingAnExplosiveGem_TriggersBothEffects()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0, 1 },
+                new() { 0, 0, 2, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Targeting);
+            grid.SpecialGems.Add(new Vector2Int(1, 3), SpecialGemType.Explosive);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(11, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(0, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 3), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 3), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 3), grid.DestroyedGems);
+        }
+        
+        [Test]
+        public void DestroyMatches_WithAnExplosiveGemDestroyingATargetingGem_TriggersBothEffects()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0, 1 },
+                new() { 0, 0, 2, 2 },
+                new() { 2, 1, 2, 1 },
+                new() { 3, 2, 1, 0 }
+            });
+            
+            grid.SpecialGems.Add(new Vector2Int(2, 0), SpecialGemType.Explosive);
+            grid.SpecialGems.Add(new Vector2Int(3, 1), SpecialGemType.Targeting);
+            grid.SwapGems(new Vector2Int(2, 0), new Vector2Int(2, 1));
+            grid.FindMatches(createSpecialGems: true);
+            
+            grid.DestroyMatches();
+            
+            Assert.AreEqual(12, grid.DestroyedGems.Count);
+            Assert.Contains(new Vector2Int(0, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 1), grid.DestroyedGems);
+            
+            Assert.Contains(new Vector2Int(1, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 0), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 1), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(0, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(2, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(3, 2), grid.DestroyedGems);
+            Assert.Contains(new Vector2Int(1, 3), grid.DestroyedGems);
         }
         
         [Test]

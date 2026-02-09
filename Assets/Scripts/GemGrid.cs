@@ -19,7 +19,7 @@ namespace GroundZero
         /// </summary>
         public readonly int Size;
         /// <summary>
-        /// The indexes of gem types in an array, where -1 means the spot is empty.
+        /// The indexes of gem types in a list, where -1 means the spot is empty.
         /// 0 is the first gem type, 1 is the second, and so on.
         /// Does not need to be set to a new list, so it should be readonly.
         /// </summary>
@@ -43,12 +43,23 @@ namespace GroundZero
         /// and the value is the length of the match, which dictates the type.
         /// </summary>
         public readonly Dictionary<Vector2Int, int> SpecialGemsCreated;
+        /// <summary>
+        /// The positions and types of all special gems in the grid.
+        /// </summary>
+        public readonly Dictionary<Vector2Int, SpecialGemType> SpecialGems;
+        /// <summary>
+        /// The positions of any gems that were destroyed in after calling DestroyMatches.
+        /// </summary>
+        public readonly List<Vector2Int> DestroyedGems;
         
         /// <summary>
         /// The positions of the two gems that were swapped most recently.
-        /// Used for creating special gems at the correct position.
         /// </summary>
         private readonly Vector2Int[] _lastSwapPositions = new Vector2Int[2];
+        /// <summary>
+        /// The types of the two gems that were swapped most recently.
+        /// </summary>
+        private readonly int[] _lastSwapTypes = new int[2];
         /// <summary>
         /// The positions in a row of matching gems to potentially be counted as matched.
         /// Only used in finding matches and can be private so other classes don't see it.
@@ -63,6 +74,10 @@ namespace GroundZero
         /// Only used internally and doesn't change, so private and readonly.
         /// </summary>
         private readonly int _gemTypeCount;
+        /// <summary>
+        /// How many of each kind of special gems there are.
+        /// </summary>
+        private readonly Dictionary<SpecialGemType, int> _specialGemCountByType = new();
         
         /// <summary>
         /// Initializes the grid to be empty of gems.
@@ -105,6 +120,8 @@ namespace GroundZero
             
             SpawnedGems = new List<Vector2Int>(capacity: maxGemCount);
             SpecialGemsCreated = new Dictionary<Vector2Int, int>(capacity: maxGemCount);
+            SpecialGems = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
+            DestroyedGems = new List<Vector2Int>(capacity: maxGemCount);
             
             _potentialHorizontalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
             _potentialVerticalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
@@ -113,6 +130,8 @@ namespace GroundZero
         /// <summary>
         /// Randomly fills grid based on the number of gem types.
         /// Checks for matches, and refills if there are any.
+        /// Once done filling, creates the same number of the same kinds of
+        /// special gems as before, in random spots.
         /// </summary>
         public void FillGrid()
         {
@@ -137,6 +156,36 @@ namespace GroundZero
                 // repeating the process until there are no matches to start with.
                 matchedCount = FindMatches();
             } while (matchedCount > 0);
+            
+            _specialGemCountByType.Clear();
+            
+            // The key of the SpecialGems dictionary is the gem's position.
+            // Since we don't need it, we can just use the discard character (underscore).
+            foreach (var (_, type) in SpecialGems)
+            {
+                if (_specialGemCountByType.ContainsKey(type)) _specialGemCountByType[type]++;
+                else _specialGemCountByType.Add(type, 1);
+            }
+            
+            SpecialGems.Clear();
+            
+            // Spawn the right number of the right kinds of special gems,
+            // to make sure special gems transfer over between grid refills.
+            foreach (var (type, count) in _specialGemCountByType)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Vector2Int position;
+                    
+                    // Find a position that doesn't have a special gem yet, then spawn a special gem there.
+                    do
+                    {
+                        position = new Vector2Int(Random.Range(0, Size), Random.Range(0, Size));
+                    } while (SpecialGems.ContainsKey(position));
+                    
+                    SpecialGems.Add(position, type);
+                }
+            }
         }
         
         /// <summary>
@@ -163,6 +212,33 @@ namespace GroundZero
             GemIndexes[position1.y][position1.x] = type2;
             _lastSwapPositions[0] = position1;
             _lastSwapPositions[1] = position2;
+            _lastSwapTypes[0] = type1;
+            _lastSwapTypes[1] = type2;
+            
+            // Make sure to update the positions of any special gems as they are swapped.
+            var isFirstSpecial = SpecialGems.ContainsKey(position1);
+            var isSecondSpecial = SpecialGems.ContainsKey(position2);
+            
+            // If both gems being swapped are special, swap them in the special gems dictionary.
+            if (isFirstSpecial && isSecondSpecial)
+            {
+                var specialType1 = SpecialGems[position1];
+                var specialType2 = SpecialGems[position2];
+                SpecialGems[position2] = specialType1;
+                SpecialGems[position1] = specialType2;
+            }
+            // Otherwise, move the type in the dictionary to the correct key.
+            else if (isFirstSpecial)
+            {
+                SpecialGems.Add(position2, SpecialGems[position1]);
+                SpecialGems.Remove(position1);
+            }
+            else if (isSecondSpecial)
+            {
+                SpecialGems.Add(position1, SpecialGems[position2]);
+                SpecialGems.Remove(position2);
+            }
+            
             return true;
         }
         
@@ -209,15 +285,18 @@ namespace GroundZero
         }
         
         /// <summary>
-        /// Removes any matched gems from the array, replacing their indexes with -1.
+        /// Destroys any matched gems from the list, replacing their indexes with -1.
         /// Does not remove any special gems that were created.
+        /// Activates any special gems in the match, potentially causing a chain reaction.
         /// </summary>
-        public void ClearMatches()
+        public void DestroyMatches()
         {
+            DestroyedGems.Clear();
+            
             foreach (var position in MatchedGems)
             {
                 if (SpecialGemsCreated.ContainsKey(position)) continue;
-                GemIndexes[position.y][position.x] = -1;
+                DestroyGem(position);
             }
             
             MatchedGems.Clear();
@@ -277,7 +356,7 @@ namespace GroundZero
         
         /// <summary>
         /// Looks to see if there is a match starting from a certain point and in a certain direction.
-        /// Stores the results in a potential match array to pick the longest between horizontal and vertical matches.
+        /// Stores the results in a potential match list to pick the longest between horizontal and vertical matches.
         /// </summary>
         /// <param name="startingPoint">Where to start looking for a match from.</param>
         /// <param name="direction">Either to the right or up.</param>
@@ -335,6 +414,9 @@ namespace GroundZero
             else position = match[Random.Range(0, matchLength)];
             
             SpecialGemsCreated.Add(position, matchLength);
+            // Cast the match length to the enum SpecialGemType, because the gem type enum is dicated by the match length.
+            if (SpecialGems.ContainsKey(position)) SpecialGems[position] = (SpecialGemType)matchLength;
+            else SpecialGems.Add(position, (SpecialGemType)matchLength);
         }
         
         /// <summary>
@@ -355,6 +437,85 @@ namespace GroundZero
             // The loop made it through without finding any gems below,
             // so drop the gem to the bottom.
             return new Vector2Int(currentPosition.x, 0);
+        }
+        
+        /// <summary>
+        /// Destroys the gem at the given position, activating any special effects as need be.
+        /// </summary>
+        /// <param name="position"></param>
+        private void DestroyGem(Vector2Int position)
+        {
+            // Make sure any newly created special gems aren't destroyed.
+            // This call is unnecessary for when DestroyGem is called in DestroyMatches,
+            // but it's needed for when DestroyGem calls itself.
+            // Also, prevent the same gem from being destroyed multiple times.
+            var gemType = GemIndexes[position.y][position.x];
+            if (gemType < 0 || SpecialGemsCreated.ContainsKey(position)) return;
+            
+            GemIndexes[position.y][position.x] = -1;
+            DestroyedGems.Add(position);
+            
+            var isSpecial = SpecialGems.ContainsKey(position);
+            if (!isSpecial) return;
+            var specialType = SpecialGems[position];
+            
+            if (specialType == SpecialGemType.Explosive) DestroyExplosiveGem(position);
+            else if (specialType == SpecialGemType.Targeting) DestroyTargetingGem(position, gemType);
+        }
+        
+        /// <summary>
+        /// Destroys the gems surrounding the explosive gem at the given position.
+        /// </summary>
+        /// <param name="position"></param>
+        private void DestroyExplosiveGem(Vector2Int position)
+        {
+            // Don't try exploding gems in invalid positions.
+            var isLeftExplodable = position.x > 0;
+            var isRightExplodable = position.x < Size - 1;
+            var isBelowExplodable = position.y > 0;
+            var isAboveExplodable = position.y < Size - 1;
+            
+            // Destroy each gem around this one, only destroying gems at positions that are actually in the grid.
+            if (isLeftExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y));
+            if (isRightExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y));
+            if (isBelowExplodable) DestroyGem(new Vector2Int(position.x, position.y - 1));
+            if (isAboveExplodable) DestroyGem(new Vector2Int(position.x, position.y + 1));
+            if (isLeftExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y - 1));
+            if (isRightExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y - 1));
+            if (isLeftExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y + 1));
+            if (isRightExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y + 1));
+        }
+        
+        /// <summary>
+        /// If being destroyed by swapping gems, destroys all gems of the other gem's type.
+        /// If being destroyed by a special gem, destroys all gems of the same type as the gem at the given position.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="type">The type of the gem at this position.</param>
+        private void DestroyTargetingGem(Vector2Int position, int type)
+        {
+            // This looks weird, but remember the gems were swapped,
+            // so the other gem is in this gem's original position,
+            // meaning the other gem's type is the type of the gem at this gem's new position.
+            var isFirstSwappedGem = position == _lastSwapPositions[1];
+            var isSecondSwappedGem = position == _lastSwapPositions[0];
+            int typeToDestroy;
+            
+            if (isFirstSwappedGem || isSecondSwappedGem)
+                typeToDestroy = isFirstSwappedGem ? _lastSwapTypes[1] : _lastSwapTypes[0];
+            else typeToDestroy = type;
+            
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    // Make the gem doesn't destroy itself.
+                    // If either the x or the y position is different, then it's not destroying itself.
+                    if ((x != position.x || y != position.y) && GemIndexes[y][x] == typeToDestroy) {
+                        DestroyGem(new Vector2Int(x, y));
+                    }
+                }
+            }
         }
     }
 }

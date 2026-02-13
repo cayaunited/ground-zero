@@ -39,9 +39,9 @@ namespace GroundZero.Tests
             
             GemGrid grid = A.GemGrid.WithGems(gems);
             
-            var wasSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
+            var wereSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
             
-            Assert.IsTrue(wasSwapped);
+            Assert.IsTrue(wereSwapped);
             Assert.AreEqual(gems[y2][x2], grid.GemIndexes[y1][x1]);
             Assert.AreEqual(gems[y1][x1], grid.GemIndexes[y2][x2]);
         }
@@ -49,19 +49,22 @@ namespace GroundZero.Tests
         [Test]
         [TestCase(0, 0, 1, 1)]
         [TestCase(0, 1, 1, 0)]
+        [TestCase(0, 0, 0, 2)]
+        [TestCase(0, 0, 2, 0)]
         public void SwapGems_WithDifferentGemTypesAndNonAdjacentPositions_DoesNotSwapPositions(int x1, int y1, int x2, int y2)
         {
             List<List<int>> gems = new()
             {
-                new() { 0, 1 },
-                new() { 2, 3 }
+                new() { 0, 1, 2 },
+                new() { 2, 3, 0 },
+                new() { 1, 2, 3 }
             };
             
             GemGrid grid = A.GemGrid.WithGems(gems);
             
-            var wasSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
+            var wereSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
             
-            Assert.IsFalse(wasSwapped);
+            Assert.IsFalse(wereSwapped);
             Assert.AreEqual(gems[y1][x1], grid.GemIndexes[y1][x1]);
             Assert.AreEqual(gems[y2][x2], grid.GemIndexes[y2][x2]);
         }
@@ -79,9 +82,9 @@ namespace GroundZero.Tests
             
             GemGrid grid = A.GemGrid.WithGems(gems);
             
-            var wasSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
+            var wereSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
             
-            Assert.IsFalse(wasSwapped);
+            Assert.IsFalse(wereSwapped);
         }
         
         [Test]
@@ -97,9 +100,9 @@ namespace GroundZero.Tests
             
             GemGrid grid = A.GemGrid.WithGems(gems);
             
-            var wasSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
+            var wereSwapped = grid.SwapGems(new(x1, y1), new(x2, y2));
             
-            Assert.IsFalse(wasSwapped);
+            Assert.IsFalse(wereSwapped);
             Assert.AreEqual(gems[y1][x1], grid.GemIndexes[y1][x1]);
             Assert.AreEqual(gems[y2][x2], grid.GemIndexes[y2][x2]);
         }

@@ -391,9 +391,12 @@ namespace GroundZero
         {
             var type1 = GemIndexes[position1.y][position1.x];
             var type2 = GemIndexes[position2.y][position2.x];
+            if (type1 == type2 || position1 == position2) return false;
             
-            return type1 != type2 && position1 != position2
-                && (position1.x == position2.x || position1.y == position2.y);
+            // Make sure the positions are right next to each other.
+            var positionDifference = position1 - position2;
+            return position1.x == position2.x && Mathf.Abs(positionDifference.y) == 1
+                || position1.y == position2.y && Mathf.Abs(positionDifference.x) == 1;
         }
         
         /// <summary>

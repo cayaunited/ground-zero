@@ -130,6 +130,7 @@ namespace GroundZero
         /// <summary>
         /// Randomly fills grid based on the number of gem types.
         /// Checks for matches, and refills if there are any.
+        /// Checks for the potential to make a match by swapping, and refills if no swaps result in a match.
         /// Once done filling, creates the same number of the same kinds of
         /// special gems as before, in random spots.
         /// </summary>
@@ -137,6 +138,7 @@ namespace GroundZero
         {
             // There's no need to set a value here, since we'll do that below before using the value.
             int matchedCount;
+            bool canMatchesBeMade;
             
             // Randomly fill the grid first.
             do
@@ -152,10 +154,11 @@ namespace GroundZero
                     }
                 }
                 
-                // Then, check for matches and refill the grid if needed,
-                // repeating the process until there are no matches to start with.
+                // Then, check for matches and possible matches, refilling the grid if needed,
+                // and repeating the process until there are no matches to start with, but there are possible matches.
                 matchedCount = FindMatches();
-            } while (matchedCount > 0);
+                canMatchesBeMade = AreTherePossibleMatches();
+            } while (matchedCount > 0 || !canMatchesBeMade);
             
             _specialGemCountByType.Clear();
             
@@ -189,6 +192,26 @@ namespace GroundZero
         }
         
         /// <summary>
+        /// Determines if any matches can be made by swapping any pair of gems together.
+        /// </summary>
+        /// <returns></returns>
+        public bool AreTherePossibleMatches()
+        {
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    // First check with a horizontal swap, then with a vertical.
+                    // Make sure to not swap gems outside of the grid.
+                    if (x < Size - 1 && DoesSwapCreateMatch(new Vector2Int(x, y), new Vector2Int(x + 1, y))) return true;
+                    if (y < Size - 1 && DoesSwapCreateMatch(new Vector2Int(x, y), new Vector2Int(x, y + 1))) return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
         /// Swaps the gem indexes found in positions 1 and 2,
         /// if the gems at those positions have different types (indexes),
         /// and the two positions are adjacent.
@@ -203,10 +226,7 @@ namespace GroundZero
             var type1 = GemIndexes[position1.y][position1.x];
             var type2 = GemIndexes[position2.y][position2.x];
             
-            // If the indexes aren't the same, the positions aren't the same,
-            // and they are adjacent, then swap them.
-            if (type1 == type2 || position1 == position2
-                || position1.x != position2.x && position1.y != position2.y) return false;
+            if (!CanSwapGems(position1, position2)) return false;
             
             GemIndexes[position2.y][position2.x] = type1;
             GemIndexes[position1.y][position1.x] = type2;
@@ -247,8 +267,9 @@ namespace GroundZero
         /// Stores the results in MatchedGems.
         /// </summary>
         /// <param name="createSpecialGems">If true, create special gems while finding matches. If false, just find matches.</param>
+        /// <param name="stopAfterFindingOne">If true, stop running after finding one match. If false, find all matches.</param>
         /// <returns>How many gems were matched.</returns>
-        public int FindMatches(bool createSpecialGems = false)
+        public int FindMatches(bool createSpecialGems = false, bool stopAfterFindingOne = false)
         {
             // First, clear out the list of matched gems to make sure
             // the final list only has gems that are currently matched.
@@ -276,6 +297,10 @@ namespace GroundZero
                     // If we should create special gems, and the match length is long enough,
                     // then create the special gem for this match.
                     if (createSpecialGems && match.Count > MIN_MATCH_LENGTH) CreateSpecialGem(match);
+                    
+                    // If we only want to check that a match is possible,
+                    // then exit the function after finding one match.
+                    if (stopAfterFindingOne) return MatchedGems.Count;
                 }
             }
             
@@ -352,6 +377,50 @@ namespace GroundZero
                     SpawnedGems.Add(new Vector2Int(x, y));
                 }
             }
+        }
+        
+        /// <summary>
+        /// Returns if the gems found in positions 1 and 2 can be swapped.
+        /// True if the gems at those positions have different types (indexes),
+        /// and the two positions are adjacent.
+        /// </summary>
+        /// <param name="position1"></param>
+        /// <param name="position2"></param>
+        /// <returns></returns>
+        private bool CanSwapGems(Vector2Int position1, Vector2Int position2)
+        {
+            var type1 = GemIndexes[position1.y][position1.x];
+            var type2 = GemIndexes[position2.y][position2.x];
+            
+            return type1 != type2 && position1 != position2
+                && (position1.x == position2.x || position1.y == position2.y);
+        }
+        
+        /// <summary>
+        /// Returns if the gems found in positions 1 and 2 can be swapped,
+        /// and result in a match.
+        /// </summary>
+        /// <param name="position1"></param>
+        /// <param name="position2"></param>
+        /// <returns></returns>
+        private bool DoesSwapCreateMatch(Vector2Int position1, Vector2Int position2)
+        {
+            // If it's possible to swap the gems, swap them.
+            if (!CanSwapGems(position1, position2)) return false;
+            var type1 = GemIndexes[position1.y][position1.x];
+            var type2 = GemIndexes[position2.y][position2.x];
+            
+            GemIndexes[position2.y][position2.x] = type1;
+            GemIndexes[position1.y][position1.x] = type2;
+            
+            // Check for matches, then make sure to unswap the gems.
+            var wasMatchFound = FindMatches(stopAfterFindingOne: true) > 0;
+            
+            GemIndexes[position1.y][position1.x] = type1;
+            GemIndexes[position2.y][position2.x] = type2;
+            
+            // A match was found, therefore there are possible matches.
+            return wasMatchFound;
         }
         
         /// <summary>

@@ -1,7 +1,7 @@
 namespace GroundZero
 {
     /// <summary>
-    /// The type of special gem, where the int value is the match length.
+    /// The type of special gem, where the integer value is the match length.
     /// </summary>
     public enum SpecialGemType
     {

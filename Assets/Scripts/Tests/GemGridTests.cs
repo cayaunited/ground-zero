@@ -527,6 +527,19 @@ namespace GroundZero.Tests
         }
         
         [Test]
+        public void FillGrid_RandomlyFillsGridWithAtLeastOnePossibleMatch()
+        {
+            const int size = 8;
+            const int gemTypeCount = 7;
+            GemGrid grid = A.GemGrid.WithSize(size).WithTypeCount(gemTypeCount);
+            
+            grid.FillGrid();
+            
+            var canMatchesBeMade = grid.AreTherePossibleMatches();
+            Assert.IsTrue(canMatchesBeMade);
+        }
+        
+        [Test]
         public void FillGrid_WithExistingSpecialGems_RandomlySpawnsNewSpecialGems()
         {
             const int size = 3;
@@ -545,6 +558,56 @@ namespace GroundZero.Tests
             Assert.AreEqual(5, grid.SpecialGems.Count);
             Assert.IsTrue(grid.SpecialGems.ContainsValue(SpecialGemType.Explosive));
             Assert.IsTrue(grid.SpecialGems.ContainsValue(SpecialGemType.Targeting));
+        }
+        
+        [Test]
+        public void AreTherePossibleMatches_WithAPossibleMatch_ReturnsTrue()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0 },
+                new() { 0, 2, 1 },
+                new() { 0, 1, 2 }
+            });
+            
+            var canMatchesBeMade = grid.AreTherePossibleMatches();
+            
+            Assert.IsTrue(canMatchesBeMade);
+            // Make sure the grid wasn't changed.
+            Assert.AreEqual(1, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(0, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(1, grid.GemIndexes[1][2]);
+            Assert.AreEqual(0, grid.GemIndexes[2][0]);
+            Assert.AreEqual(1, grid.GemIndexes[2][1]);
+            Assert.AreEqual(2, grid.GemIndexes[2][2]);
+        }
+        
+        [Test]
+        public void AreTherePossibleMatches_WithNoPossibleMatch_ReturnsFalse()
+        {
+            GemGrid grid = A.GemGrid.WithGems(new()
+            {
+                new() { 1, 0, 0 },
+                new() { 1, 2, 2 },
+                new() { 0, 0, 2 }
+            });
+            
+            var canMatchesBeMade = grid.AreTherePossibleMatches();
+            
+            Assert.IsFalse(canMatchesBeMade);
+            // Make sure the grid wasn't changed.
+            Assert.AreEqual(1, grid.GemIndexes[0][0]);
+            Assert.AreEqual(0, grid.GemIndexes[0][1]);
+            Assert.AreEqual(0, grid.GemIndexes[0][2]);
+            Assert.AreEqual(1, grid.GemIndexes[1][0]);
+            Assert.AreEqual(2, grid.GemIndexes[1][1]);
+            Assert.AreEqual(2, grid.GemIndexes[1][2]);
+            Assert.AreEqual(0, grid.GemIndexes[2][0]);
+            Assert.AreEqual(0, grid.GemIndexes[2][1]);
+            Assert.AreEqual(2, grid.GemIndexes[2][2]);
         }
         
         [Test]

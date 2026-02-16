@@ -1,0 +1,403 @@
+fileFormatVersion: 2
+guid: b855e301d7c5947c395b53b4d9b6d6ec
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 520699650640269557
+    second: Orange Gem Pieces_0
+  - first:
+      213: -1273012041965082988
+    second: Orange Gem Pieces_1
+  - first:
+      213: -7371223177309286962
+    second: Orange Gem Pieces_2
+  - first:
+      213: 7605425120182849279
+    second: Orange Gem Pieces_3
+  - first:
+      213: 7364072179125942044
+    second: Orange Gem Pieces_4
+  - first:
+      213: 8034767688516884497
+    second: Orange Gem Pieces_5
+  - first:
+      213: 3947268933018344681
+    second: Orange Gem Pieces_6
+  - first:
+      213: -6791129663207516964
+    second: Orange Gem Pieces_7
+  - first:
+      213: -3480817235987598565
+    second: Orange Gem Pieces_8
+  - first:
+      213: -7888484901223366021
+    second: Orange Gem Pieces_9
+  - first:
+      213: -8644730785546366237
+    second: Orange Gem Pieces_10
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Orange Gem Piece 0
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 327
+        width: 58
+        height: 114
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f0551fc295e93700800000000000000
+      internalID: 520699650640269557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 1
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 399
+        width: 58
+        height: 98
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49660e3ea4a555ee0800000000000000
+      internalID: -1273012041965082988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 2
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 399
+        width: 58
+        height: 98
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecd8a5c139724b990800000000000000
+      internalID: -7371223177309286962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 3
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 327
+        width: 58
+        height: 114
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffec45ef9d5eb8960800000000000000
+      internalID: 7605425120182849279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 4
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 227
+        width: 50
+        height: 58
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c17732161a0723660800000000000000
+      internalID: 7364072179125942044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 5
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 163
+        width: 90
+        height: 170
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 118d5d684aa318f60800000000000000
+      internalID: 8034767688516884497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 6
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 227
+        width: 50
+        height: 58
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ec5e795e2487c630800000000000000
+      internalID: 3947268933018344681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 7
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 99
+        width: 50
+        height: 58
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd4d5e06d8f01c1a0800000000000000
+      internalID: -6791129663207516964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 8
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 99
+        width: 50
+        height: 58
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b13f6e08a27a1bfc0800000000000000
+      internalID: -3480817235987598565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 9
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 39
+        width: 42
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b728c8ef6c8768290800000000000000
+      internalID: -7888484901223366021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Orange Gem Piece 10
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 39
+        width: 42
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e210acf62fb70880800000000000000
+      internalID: -8644730785546366237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 3b473e0fc9abd4d6c902004b68421ecf
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Orange Gem Piece 0: 520699650640269557
+      Orange Gem Piece 1: -1273012041965082988
+      Orange Gem Piece 10: -8644730785546366237
+      Orange Gem Piece 2: -7371223177309286962
+      Orange Gem Piece 3: 7605425120182849279
+      Orange Gem Piece 4: 7364072179125942044
+      Orange Gem Piece 5: 8034767688516884497
+      Orange Gem Piece 6: 3947268933018344681
+      Orange Gem Piece 7: -6791129663207516964
+      Orange Gem Piece 8: -3480817235987598565
+      Orange Gem Piece 9: -7888484901223366021
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

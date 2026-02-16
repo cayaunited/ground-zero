@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace GroundZero
 {
@@ -13,11 +12,10 @@ namespace GroundZero
         [SerializeField] [Min(3)] private int _gridSize;
         [SerializeField] [Min(0)] private float _spaceBetweenGems;
         /// <summary>
-        /// The array of different sprites used based on the gem type.
+        /// The array of different prefabs used, based on the gem type.
         /// The gem's type index is used in this array.
         /// </summary>
-        [SerializeField] private Sprite[] _gemSprites;
-        [SerializeField] private Gem _gemPrefab;
+        [SerializeField] private Gem[] _gemPrefabs;
         [SerializeField] private Transform _selectionCursor;
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _gemLayer;
@@ -37,8 +35,9 @@ namespace GroundZero
         /// <summary>
         /// The gems that are no longer visible and used to replace matched gems.
         /// Uses a Stack instead of a List because the order doesn't matter here.
+        /// Also, use a dictionary to find a pool based on type.
         /// </summary>
-        private readonly Stack<Gem> _inactiveGems = new();
+        private readonly Dictionary<int, Stack<Gem>> _inactiveGems = new();
         private Vector2Int _selectedGemPosition;
         private bool _isAGemSelected;
         private bool _areGemsMatching;
@@ -46,7 +45,14 @@ namespace GroundZero
         private void Awake()
         {
             // When the player starts the game, create an empty grid.
-            _grid = new GemGrid(_gridSize, _gemSprites.Length);
+            var gemTypeCount = _gemPrefabs.Length;
+            _grid = new GemGrid(_gridSize, gemTypeCount);
+            
+            // Create a new inactive gem pool for each gem type.
+            for (int i = 0; i < gemTypeCount; i++)
+            {
+                _inactiveGems.Add(i, new());
+            }
             
             // TODO: REMOVE
             FillGrid();
@@ -107,7 +113,7 @@ namespace GroundZero
                 // Some spots in the list may be blank, if there is no gem there.
                 if (!gem) continue;
                 gem.gameObject.SetActive(false);
-                _inactiveGems.Push(gem);
+                _inactiveGems[gem.TypeIndex].Push(gem);
             }
             
             _activeGems.Clear();
@@ -120,12 +126,12 @@ namespace GroundZero
             {
                 for (int x = 0; x < _gridSize; x++)
                 {
-                    // Get a new gem and initialize it with the correct sprite at the correct position,
+                    // Get a new gem and initialize it with the correct sprite / prefab at the correct position,
                     // marking it as special as need be.
-                    var gem = GetGem();
-                    var spriteIndex = _grid.GemIndexes[y][x];
+                    var gemType = _grid.GemIndexes[y][x];
+                    var gem = GetGem(gemType);
                     var position = new Vector2Int(x, y);
-                    gem.Initialize(_gemSprites[spriteIndex], position, GridToWorldPosition(x, y));
+                    gem.Initialize(gemType, position, GridToWorldPosition(x, y));
                     if (_grid.SpecialGems.ContainsKey(position)) gem.MakeSpecial(_grid.SpecialGems[position]);
                     _activeGems.Add(gem);
                 }
@@ -135,10 +141,11 @@ namespace GroundZero
         /// <summary>
         /// Returns a gem from the pool, or creates a new one if there are none in the pool.
         /// </summary>
+        /// <param name="gemType"></param>
         /// <returns></returns>
-        private Gem GetGem()
+        private Gem GetGem(int gemType)
         {
-            return _inactiveGems.Count > 0 ? _inactiveGems.Pop() : Instantiate(_gemPrefab);
+            return _inactiveGems[gemType].Count > 0 ? _inactiveGems[gemType].Pop() : Instantiate(_gemPrefabs[gemType]);
         }
         
         /// <summary>
@@ -297,8 +304,8 @@ namespace GroundZero
             {
                 // First, create the gem (or grab one from the inactive pool if any are available).
                 var gemType = _grid.GemIndexes[position.y][position.x];
-                var gem = GetGem();
-                gem.Initialize(_gemSprites[gemType], position, GridToWorldPosition(position.x, position.y));
+                var gem = GetGem(gemType);
+                gem.Initialize(gemType, position, GridToWorldPosition(position.x, position.y));
                 
                 // Then, track it in the correct position.
                 var index = GridPositionToIndex(position.x, position.y);
@@ -320,7 +327,7 @@ namespace GroundZero
             var index = GridPositionToIndex(x, y);
             var gem = _activeGems[index];
             gem.gameObject.SetActive(false);
-            _inactiveGems.Push(gem);
+            _inactiveGems[gem.TypeIndex].Push(gem);
             _activeGems[index] = null;
         }
     }

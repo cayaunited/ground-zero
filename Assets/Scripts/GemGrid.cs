@@ -42,7 +42,7 @@ namespace GroundZero
         /// The key is the position of the newly created special gem,
         /// and the value is the length of the match, which dictates the type.
         /// </summary>
-        public readonly Dictionary<Vector2Int, int> SpecialGemsCreated;
+        public readonly Dictionary<Vector2Int, SpecialGemType> SpecialGemsCreated;
         /// <summary>
         /// The positions and types of all special gems in the grid.
         /// </summary>
@@ -119,7 +119,7 @@ namespace GroundZero
             DroppedGems = new Dictionary<Vector2Int, Vector2Int>(capacity: maxGemCount - Size);
             
             SpawnedGems = new List<Vector2Int>(capacity: maxGemCount);
-            SpecialGemsCreated = new Dictionary<Vector2Int, int>(capacity: maxGemCount);
+            SpecialGemsCreated = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
             SpecialGems = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
             DestroyedGems = new List<Vector2Int>(capacity: maxGemCount);
             
@@ -226,7 +226,7 @@ namespace GroundZero
             var type1 = GemIndexes[position1.y][position1.x];
             var type2 = GemIndexes[position2.y][position2.x];
             
-            if (!CanSwapGems(position1, position2)) return false;
+            if (!DoesSwapCreateMatch(position1, position2)) return false;
             
             GemIndexes[position2.y][position2.x] = type1;
             GemIndexes[position1.y][position1.x] = type2;
@@ -355,6 +355,13 @@ namespace GroundZero
                         DroppedGems.Add(currentPosition, dropPosition);
                         GemIndexes[dropPosition.y][x] = gemTypeIndex;
                         GemIndexes[currentPosition.y][x] = -1;
+                        
+                        // Also make sure to update SpecialGems if needed.
+                        if (SpecialGems.ContainsKey(currentPosition))
+                        {
+                            SpecialGems.Add(dropPosition, SpecialGems[currentPosition]);
+                            SpecialGems.Remove(currentPosition);
+                        }
                     }
                 }
             }
@@ -408,8 +415,13 @@ namespace GroundZero
         /// <returns></returns>
         private bool DoesSwapCreateMatch(Vector2Int position1, Vector2Int position2)
         {
-            // If it's possible to swap the gems, swap them.
             if (!CanSwapGems(position1, position2)) return false;
+            
+            // If one of the gems is targeting, then it's possible.
+            if (SpecialGems.ContainsKey(position1) && SpecialGems[position1] == SpecialGemType.Targeting
+                || SpecialGems.ContainsKey(position2) && SpecialGems[position2] == SpecialGemType.Targeting) return true;
+            
+            // If it's possible to swap the gems, swap them.
             var type1 = GemIndexes[position1.y][position1.x];
             var type2 = GemIndexes[position2.y][position2.x];
             
@@ -485,10 +497,11 @@ namespace GroundZero
             else if (match.Contains(_lastSwapPositions[1])) position = _lastSwapPositions[1];
             else position = match[Random.Range(0, matchLength)];
             
-            SpecialGemsCreated.Add(position, matchLength);
             // Cast the match length to the enum SpecialGemType, because the gem type enum is dicated by the match length.
-            if (SpecialGems.ContainsKey(position)) SpecialGems[position] = (SpecialGemType)matchLength;
-            else SpecialGems.Add(position, (SpecialGemType)matchLength);
+            var specialType = (SpecialGemType)matchLength;
+            SpecialGemsCreated.Add(position, specialType);
+            if (SpecialGems.ContainsKey(position)) SpecialGems[position] = specialType;
+            else SpecialGems.Add(position, specialType);
         }
         
         /// <summary>
@@ -530,6 +543,7 @@ namespace GroundZero
             var isSpecial = SpecialGems.ContainsKey(position);
             if (!isSpecial) return;
             var specialType = SpecialGems[position];
+            SpecialGems.Remove(position);
             
             if (specialType == SpecialGemType.Explosive) DestroyExplosiveGem(position);
             else if (specialType == SpecialGemType.Targeting) DestroyTargetingGem(position, gemType);

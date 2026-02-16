@@ -41,6 +41,7 @@ namespace GroundZero
         private readonly Stack<Gem> _inactiveGems = new();
         private Vector2Int _selectedGemPosition;
         private bool _isAGemSelected;
+        private bool _areGemsMatching;
         
         private void Awake()
         {
@@ -48,7 +49,7 @@ namespace GroundZero
             _grid = new GemGrid(_gridSize, _gemSprites.Length);
             
             // TODO: REMOVE
-            StartRound();
+            FillGrid();
         }
         
         /// <summary>
@@ -58,6 +59,9 @@ namespace GroundZero
         /// <param name="endingScreenPosition">The mouse's screen position at the end of the swipe.</param>
         public void TrySwappingGems(Vector2 startingScreenPosition, Vector2 endingScreenPosition)
         {
+            // Prevent swapping while matching.
+            if (_areGemsMatching) return;
+            
             var distanceBetweenPositions = Vector2.Distance(startingScreenPosition, endingScreenPosition);
             // If the distance between the starting and ending positions is zero,
             // then the screen was tapped so we should try to select / deselect a gem.
@@ -95,7 +99,7 @@ namespace GroundZero
         /// <summary>
         /// Spawns in a new grid of gems, clearing out any old ones.
         /// </summary>
-        private void StartRound()
+        private void FillGrid()
         {
             // Clear out all previous gems.
             foreach (var gem in _activeGems)
@@ -116,10 +120,13 @@ namespace GroundZero
             {
                 for (int x = 0; x < _gridSize; x++)
                 {
-                    // Get a new gem and initialize it with the correct sprite at the correct position.
+                    // Get a new gem and initialize it with the correct sprite at the correct position,
+                    // marking it as special as need be.
                     var gem = GetGem();
                     var spriteIndex = _grid.GemIndexes[y][x];
-                    gem.Initialize(_gemSprites[spriteIndex], new Vector2Int(x, y), GridToWorldPosition(x, y));
+                    var position = new Vector2Int(x, y);
+                    gem.Initialize(_gemSprites[spriteIndex], position, GridToWorldPosition(x, y));
+                    if (_grid.SpecialGems.ContainsKey(position)) gem.MakeSpecial(_grid.SpecialGems[position]);
                     _activeGems.Add(gem);
                 }
             }
@@ -215,6 +222,91 @@ namespace GroundZero
             // Then, tell the gems to move to their new positions.
             gem1.MoveTo(position2, GridToWorldPosition(position2.x, position2.y));
             gem2.MoveTo(position1, GridToWorldPosition(position1.x, position1.y));
+            
+            _areGemsMatching = true;
+            DestroyAnyMatches();
+        }
+        
+        /// <summary>
+        /// Checks for any matches that were just made,
+        /// and starts destroying them if there are any.
+        /// Creates new special gems as needed.
+        /// Refills grid if there aren't any matches made and if none are possible.
+        /// </summary>
+        private void DestroyAnyMatches()
+        {
+            // First, match and destroy the gems in the data (if there are any matches).
+            var wereMatchesCreated = _grid.FindMatches(createSpecialGems: true) > 0;
+            
+            if (!wereMatchesCreated)
+            {
+                if (!_grid.AreTherePossibleMatches()) FillGrid();
+                _areGemsMatching = false;
+                return;
+            }
+            
+            foreach (var (position, type) in _grid.SpecialGemsCreated)
+            {
+                var index = GridPositionToIndex(position.x, position.y);
+                var gem = _activeGems[index];
+                gem.MakeSpecial(type);
+            }
+            
+            _grid.DestroyMatches();
+            
+            // Then, propogate that destruction to the visuals.
+            foreach (var position in _grid.DestroyedGems)
+            {
+                RecycleGem(position.x, position.y);
+            }
+            
+            DropRemainingGems();
+        }
+        
+        /// <summary>
+        /// Makes any remaining gems after a match drop to a lower position if possible.
+        /// </summary>
+        private void DropRemainingGems()
+        {
+            // First, drop the gems in the data.
+            _grid.DropGems();
+            
+            // Then, propogate that drop to the visuals.
+            foreach (var (initialPosition, finalPosition) in _grid.DroppedGems)
+            {
+                var initialIndex = GridPositionToIndex(initialPosition.x, initialPosition.y);
+                var finalIndex = GridPositionToIndex(finalPosition.x, finalPosition.y);
+                var gem = _activeGems[initialIndex];
+                // Make sure to maintain the correct order in the active gems list.
+                _activeGems[finalIndex] = gem;
+                _activeGems[initialIndex] = null;
+                gem.MoveTo(finalPosition, GridToWorldPosition(finalPosition.x, finalPosition.y));
+            }
+            
+            SpawnReplacementGems();
+        }
+        
+        /// <summary>
+        /// Spawns new gems to fall from the top and replace the destroyed gems.
+        /// </summary>
+        private void SpawnReplacementGems()
+        {
+            _grid.SpawnNewGems();
+            
+            foreach (var position in _grid.SpawnedGems)
+            {
+                // First, create the gem (or grab one from the inactive pool if any are available).
+                var gemType = _grid.GemIndexes[position.y][position.x];
+                var gem = GetGem();
+                gem.Initialize(_gemSprites[gemType], position, GridToWorldPosition(position.x, position.y));
+                
+                // Then, track it in the correct position.
+                var index = GridPositionToIndex(position.x, position.y);
+                _activeGems[index] = gem;
+            }
+            
+            // Loop back around to see if any new matches were made.
+            DestroyAnyMatches();
         }
         
         /// <summary>

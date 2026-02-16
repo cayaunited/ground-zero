@@ -9,6 +9,7 @@ namespace GroundZero
         // so make it private and add an underscore to quickly identify
         // it later in the code as private.
         private SpriteRenderer _renderer;
+        private SpecialGemType _specialType;
         
         // We want to be able to read the grid position of this gem from anywhere,
         // but we only want this gem to modify the grid position,
@@ -29,7 +30,24 @@ namespace GroundZero
             _renderer.sprite = sprite;
             GridPosition = gridPosition;
             transform.position = worldPosition;
+            // TODO: TEMPORARY SOLUTION FOR SPECIALS
+            _renderer.color = Color.white;
+            
             gameObject.SetActive(true);
+        }
+        
+        /// <summary>
+        /// Marks this gem as the given special type of gem.
+        /// </summary>
+        /// <param name="specialType"></param>
+        public void MakeSpecial(SpecialGemType specialType)
+        {
+            _specialType = specialType;
+            // TODO: TEMPORARY SOLUTION FOR SPECIALS
+            var color = Color.white;
+            if (specialType == SpecialGemType.Targeting) color.a = 0.5f;
+            else if (specialType == SpecialGemType.Explosive) color = Color.red;
+            _renderer.color = color;
         }
         
         /// <summary>

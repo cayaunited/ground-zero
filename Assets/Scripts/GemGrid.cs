@@ -304,6 +304,20 @@ namespace GroundZero
                 }
             }
             
+            // Make sure to count swapped gems as matched if at least one was a targeting gem,
+            // and we are creating special gems / handling them.
+            if (createSpecialGems) {
+                var swapPosition1 = _lastSwapPositions[0];
+                var swapPosition2 = _lastSwapPositions[1];
+                
+                if (SpecialGems.ContainsKey(swapPosition1) && SpecialGems[swapPosition1] == SpecialGemType.Targeting
+                    || SpecialGems.ContainsKey(swapPosition2) && SpecialGems[swapPosition2] == SpecialGemType.Targeting)
+                {
+                    if (!MatchedGems.Contains(swapPosition1)) MatchedGems.Add(swapPosition1);
+                    if (!MatchedGems.Contains(swapPosition2)) MatchedGems.Add(swapPosition2);
+                }
+            }
+            
             // Return how many gems are currently in the list,
             // which is different from the capacity (the max possible number of gems in the list).
             return MatchedGems.Count;

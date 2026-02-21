@@ -58,6 +58,14 @@ namespace GroundZero
             FillGrid();
         }
         
+        private void Update()
+        {
+            foreach (var gem in _activeGems)
+            {
+                gem.OnUpdate();
+            }
+        }
+        
         /// <summary>
         /// Tries either selecting or swapping gems based on the given mouse screen positions.
         /// </summary>

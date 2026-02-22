@@ -52,6 +52,118 @@ namespace GroundZero
         
         private void Awake()
         {
+            // _grid = new GemGrid(5, 4);
+            
+            // //  2   0   1   3   0
+            // //  3   1   2   3   1
+            // //  2   0   1   2   3
+            // //  3   2   1   0   2
+            // //  0   3   2   1   0
+            
+            // _grid.GemIndexes[0][0] = 0;
+            // _grid.GemIndexes[0][1] = 3;
+            // _grid.GemIndexes[0][2] = 2;
+            // _grid.GemIndexes[0][3] = 1;
+            // _grid.GemIndexes[0][4] = 0;
+            // _grid.GemIndexes[1][0] = 3;
+            // _grid.GemIndexes[1][1] = 2;
+            // _grid.GemIndexes[1][2] = 1;
+            // _grid.GemIndexes[1][3] = 0;
+            // _grid.GemIndexes[1][4] = 2;
+            // _grid.GemIndexes[2][0] = 2;
+            // _grid.GemIndexes[2][1] = 0;
+            // _grid.GemIndexes[2][2] = 1;
+            // _grid.GemIndexes[2][3] = 2;
+            // _grid.GemIndexes[2][4] = 3;
+            // _grid.GemIndexes[3][0] = 3;
+            // _grid.GemIndexes[3][1] = 1;
+            // _grid.GemIndexes[3][2] = 2;
+            // _grid.GemIndexes[3][3] = 3;
+            // _grid.GemIndexes[3][4] = 1;
+            // _grid.GemIndexes[4][0] = 2;
+            // _grid.GemIndexes[4][1] = 0;
+            // _grid.GemIndexes[4][2] = 1;
+            // _grid.GemIndexes[4][3] = 3;
+            // _grid.GemIndexes[4][4] = 0;
+            
+            // Debug.Log("WAS SWAPPED: " + _grid.SwapGems(new Vector2Int(1, 3), new Vector2Int(2, 3)));
+            
+            // for (int i = _grid.GemIndexes.Count - 1; i >= 0; i--)
+            // {
+            //     var row = _grid.GemIndexes[i];
+            //     var text = "";
+                
+            //     foreach (var column in row)
+            //     {
+            //         text += $"{column}    ";
+            //     }
+                
+            //     Debug.Log(text);
+            // }
+            
+            // Debug.Log("MATCH COUNT: " + _grid.FindMatches(createSpecialGems: true));
+            
+            // foreach (var position in _grid.MatchedGems)
+            // {
+            //     Debug.Log(position);
+            // }
+            
+            // foreach (var (position, type) in _grid.SpecialGems)
+            // {
+            //     Debug.Log(position + " " + type);
+            // }
+            
+            // _grid.DestroyMatches();
+            
+            // foreach (var position in _grid.DestroyedGems)
+            // {
+            //     Debug.Log("DESTROYED: " + position);
+            // }
+            
+            // for (int i = _grid.GemIndexes.Count - 1; i >= 0; i--)
+            // {
+            //     var row = _grid.GemIndexes[i];
+            //     var text = "";
+                
+            //     foreach (var column in row)
+            //     {
+            //         text += $"{column}    ";
+            //     }
+                
+            //     Debug.Log(text);
+            // }
+            
+            // foreach (var (position, type) in _grid.SpecialGems)
+            // {
+            //     Debug.Log(position + " " + type);
+            // }
+            
+            // _grid.DropGems();
+            
+            // foreach (var (initialPosition, finalPosition) in _grid.DroppedGems)
+            // {
+            //     Debug.Log("DROPPED: " + initialPosition + " to " + finalPosition);
+            // }
+            
+            // for (int i = _grid.GemIndexes.Count - 1; i >= 0; i--)
+            // {
+            //     var row = _grid.GemIndexes[i];
+            //     var text = "";
+                
+            //     foreach (var column in row)
+            //     {
+            //         text += $"{column}    ";
+            //     }
+                
+            //     Debug.Log(text);
+            // }
+            
+            // foreach (var (position, type) in _grid.SpecialGems)
+            // {
+            //     Debug.Log(position + " " + type);
+            // }
+            
+            // return;
             // When the player starts the game, create an empty grid.
             var gemTypeCount = _gemPrefabs.Length;
             _grid = new GemGrid(_gridSize, gemTypeCount);
@@ -314,13 +426,6 @@ namespace GroundZero
             
             _gridState = GridState.Matching;
             
-            foreach (var (position, type) in _grid.SpecialGemsCreated)
-            {
-                var index = GridPositionToIndex(position.x, position.y);
-                var gem = _activeGems[index];
-                gem.MakeSpecial(type);
-            }
-            
             _grid.DestroyMatches();
             
             // Then, propogate that destruction to the visuals.
@@ -331,6 +436,17 @@ namespace GroundZero
                 gem.Destroy(shouldExplode: _grid.GemsDestroyedByExplosions.Contains(position));
                 _animatingGems.Add(gem);
                 _activeGems[index] = null;
+            }
+            
+            // Create any new special gems.
+            foreach (var (position, specialType) in _grid.SpecialGemsCreated)
+            {
+                var gemType = _grid.SpecialGemTypesCreated[position];
+                var gem = GetGem(gemType);
+                gem.Initialize(gemType, position, GridToWorldPosition(position.x, position.y), _screenBottom, RecycleGem);
+                gem.MakeSpecial(specialType);
+                var index = GridPositionToIndex(position.x, position.y);
+                _activeGems[index] = gem;
             }
         }
         

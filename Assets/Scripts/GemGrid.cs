@@ -38,11 +38,17 @@ namespace GroundZero
         /// </summary>
         public readonly List<Vector2Int> SpawnedGems;
         /// <summary>
-        /// The positions and types of any special gems created after a match.
+        /// The positions and special types of any special gems created after a match.
         /// The key is the position of the newly created special gem,
-        /// and the value is the length of the match, which dictates the type.
+        /// and the value is the length of the match, which dictates the special type.
         /// </summary>
         public readonly Dictionary<Vector2Int, SpecialGemType> SpecialGemsCreated;
+        /// <summary>
+        /// The positions and gem types of any special gems created after a match.
+        /// The key is the position of the newly created special gem,
+        /// and the value is the type index.
+        /// </summary>
+        public readonly Dictionary<Vector2Int, int> SpecialGemTypesCreated;
         /// <summary>
         /// The positions and types of all special gems in the grid.
         /// </summary>
@@ -124,6 +130,7 @@ namespace GroundZero
             
             SpawnedGems = new List<Vector2Int>(capacity: maxGemCount);
             SpecialGemsCreated = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
+            SpecialGemTypesCreated = new Dictionary<Vector2Int, int>(capacity: maxGemCount);
             SpecialGems = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
             DestroyedGems = new List<Vector2Int>(capacity: maxGemCount);
             GemsDestroyedByExplosions = new List<Vector2Int>(capacity: maxGemCount);
@@ -280,34 +287,7 @@ namespace GroundZero
             // the final list only has gems that are currently matched.
             MatchedGems.Clear();
             SpecialGemsCreated.Clear();
-            
-            // Starting from the bottom left of the grid, look for horizontal and vertical matches.
-            for (int y = 0; y < Size; y++)
-            {
-                for (int x = 0; x < Size; x++)
-                {
-                    var position = new Vector2Int(x, y);
-                    // Skip checking this position if it's already been matched.
-                    if (MatchedGems.Contains(position)) continue;
-                    var horizontalMatchLength = FindMatchInDirection(position, Vector2Int.right);
-                    var verticalMatchLength = FindMatchInDirection(position, Vector2Int.up);
-                    
-                    // If the match length in either direction isn't long enough, move on to the next grid position.
-                    if (horizontalMatchLength < MIN_MATCH_LENGTH && verticalMatchLength < MIN_MATCH_LENGTH) continue;
-                    
-                    // Pick the longest match, if any, to use, then add those gems to the matched list.
-                    var match = horizontalMatchLength >= verticalMatchLength ? _potentialHorizontalMatch : _potentialVerticalMatch;
-                    MatchedGems.AddRange(match);
-                    
-                    // If we should create special gems, and the match length is long enough,
-                    // then create the special gem for this match.
-                    if (createSpecialGems && match.Count > MIN_MATCH_LENGTH) CreateSpecialGem(match);
-                    
-                    // If we only want to check that a match is possible,
-                    // then exit the function after finding one match.
-                    if (stopAfterFindingOne) return MatchedGems.Count;
-                }
-            }
+            SpecialGemTypesCreated.Clear();
             
             // Make sure to count swapped gems as matched if at least one was a targeting gem,
             // and we are creating special gems / handling them.
@@ -320,6 +300,46 @@ namespace GroundZero
                 {
                     if (!MatchedGems.Contains(swapPosition1)) MatchedGems.Add(swapPosition1);
                     if (!MatchedGems.Contains(swapPosition2)) MatchedGems.Add(swapPosition2);
+                }
+            }
+            
+            // Starting from the bottom left of the grid, look for horizontal and vertical matches.
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    var position = new Vector2Int(x, y);
+                    var horizontalMatchLength = FindMatchInDirection(position, Vector2Int.right);
+                    var verticalMatchLength = FindMatchInDirection(position, Vector2Int.up);
+                    
+                    // If the match length in either direction isn't long enough, move on to the next grid position.
+                    if (horizontalMatchLength < MIN_MATCH_LENGTH && verticalMatchLength < MIN_MATCH_LENGTH) continue;
+                    
+                    // Add any matched gems to the matched list.
+                    if (horizontalMatchLength >= MIN_MATCH_LENGTH)
+                    {
+                        foreach (var matchedPosition in _potentialHorizontalMatch)
+                        {
+                            if (!MatchedGems.Contains(matchedPosition)) MatchedGems.Add(matchedPosition);
+                        }
+                    }
+                    
+                    if (verticalMatchLength >= MIN_MATCH_LENGTH)
+                    {
+                        foreach (var matchedPosition in _potentialVerticalMatch)
+                        {
+                            if (!MatchedGems.Contains(matchedPosition)) MatchedGems.Add(matchedPosition);
+                        }
+                    }
+                    
+                    // If we should create special gems, and the match length is long enough,
+                    // then create the special gem for this match.
+                    if (createSpecialGems && horizontalMatchLength > MIN_MATCH_LENGTH) CreateSpecialGem(_potentialHorizontalMatch);
+                    if (createSpecialGems && verticalMatchLength > MIN_MATCH_LENGTH) CreateSpecialGem(_potentialVerticalMatch);
+                    
+                    // If we only want to check that a match is possible,
+                    // then exit the function after finding one match.
+                    if (stopAfterFindingOne) return MatchedGems.Count;
                 }
             }
             
@@ -340,11 +360,18 @@ namespace GroundZero
             
             foreach (var position in MatchedGems)
             {
-                if (SpecialGemsCreated.ContainsKey(position)) continue;
                 DestroyGem(position, false);
             }
             
             MatchedGems.Clear();
+            
+            // Actually creates the special gems, to allow for any previous special gems in the same spot to be destroyed.
+            foreach (var (position, specialType) in SpecialGemsCreated)
+            {
+                if (SpecialGems.ContainsKey(position)) SpecialGems[position] = specialType;
+                else SpecialGems.Add(position, specialType);
+                GemIndexes[position.y][position.x] = SpecialGemTypesCreated[position];
+            }
         }
         
         /// <summary>
@@ -503,8 +530,7 @@ namespace GroundZero
                 
                 // If the next gem in the given direction is of a different type,
                 // then exit because this match search is done.
-                // Also, if the next gem has already been matched, then stop.
-                if (nextGemTypeIndex != gemTypeIndex || MatchedGems.Contains(nextPosition)) return matchLength;
+                if (nextGemTypeIndex != gemTypeIndex) return matchLength;
                 
                 matchLength++;
                 potentialMatch.Add(nextPosition);
@@ -531,9 +557,10 @@ namespace GroundZero
             
             // Cast the match length to the enum SpecialGemType, because the gem type enum is dicated by the match length.
             var specialType = (SpecialGemType)matchLength;
+            // Don't create the special gem if it's overwriting one that's already created.
+            if (SpecialGemsCreated.ContainsKey(position)) return;
             SpecialGemsCreated.Add(position, specialType);
-            if (SpecialGems.ContainsKey(position)) SpecialGems[position] = specialType;
-            else SpecialGems.Add(position, specialType);
+            SpecialGemTypesCreated.Add(position, GemIndexes[position.y][position.x]);
         }
         
         /// <summary>
@@ -563,12 +590,9 @@ namespace GroundZero
         /// <param name="shouldExplode"></param>
         private void DestroyGem(Vector2Int position, bool shouldExplode)
         {
-            // Make sure any newly created special gems aren't destroyed.
-            // This call is unnecessary for when DestroyGem is called in DestroyMatches,
-            // but it's needed for when DestroyGem calls itself.
-            // Also, prevent the same gem from being destroyed multiple times.
+            // Prevent the same gem from being destroyed multiple times.
             var gemType = GemIndexes[position.y][position.x];
-            if (gemType < 0 || SpecialGemsCreated.ContainsKey(position)) return;
+            if (gemType < 0) return;
             
             GemIndexes[position.y][position.x] = -1;
             DestroyedGems.Add(position);

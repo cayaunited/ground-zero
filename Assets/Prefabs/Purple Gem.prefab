@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 5753150303298723220}
   - component: {fileID: 6211043340225637714}
   - component: {fileID: 227493757626864225}
+  - component: {fileID: 1700400645821503238}
   - component: {fileID: 436584942386728593}
   m_Layer: 7
   m_Name: Purple Gem
@@ -146,9 +147,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 094990bdacf1745cd91bb8be4d60af59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GroundZero::GroundZero.Gem
-  _pieceGravityScale: 1
+  _swapDuration: 0.25
+  _shrinkDuration: 0.25
+  _gravityScale: 1
   _pieceShakeDistance: 0.15
   _pieceShakeSpeed: 0.1
+  _explosionStrength: 5
   _centerPieceIndex: 3
   _explosivePieces:
   - {fileID: 1106437098767097924}
@@ -160,6 +164,8 @@ MonoBehaviour:
   - {fileID: 9123749334804814402}
   _shineEffectDuration: 2
   _shineWaitDuration: 1
+  _shineScaleAmount: 0.05
+  _shineScaleSpeed: 2
   _shineEffect: {fileID: 3785268744990729502}
 --- !u!212 &6211043340225637714
 SpriteRenderer:
@@ -266,6 +272,33 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!50 &1700400645821503238
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8629639753074713899}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
 --- !u!331 &436584942386728593
 SpriteMask:
   m_ObjectHideFlags: 0

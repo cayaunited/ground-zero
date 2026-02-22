@@ -11,6 +11,10 @@ namespace GroundZero
         // so set the minimum to 3.
         [SerializeField] [Min(3)] private int _gridSize;
         [SerializeField] [Min(0)] private float _spaceBetweenGems;
+        [Tooltip("The y position of the bottom of the screen. Used for explosion animation.")]
+        [SerializeField] private float _screenBottom;
+        [Tooltip("How many grid units above the grid should gems spawn to make sure they spawn off screen?")]
+        [SerializeField] [Min(0)] private int _spawnPositionOffset;
         /// <summary>
         /// The array of different prefabs used, based on the gem type.
         /// The gem's type index is used in this array.
@@ -33,6 +37,10 @@ namespace GroundZero
         /// </summary>
         private readonly List<Gem> _activeGems = new();
         /// <summary>
+        /// Contains any inactive gems that still need animated.
+        /// </summary>
+        private readonly List<Gem> _animatingGems = new();
+        /// <summary>
         /// The gems that are no longer visible and used to replace matched gems.
         /// Uses a Stack instead of a List because the order doesn't matter here.
         /// Also, use a dictionary to find a pool based on type.
@@ -40,7 +48,7 @@ namespace GroundZero
         private readonly Dictionary<int, Stack<Gem>> _inactiveGems = new();
         private Vector2Int _selectedGemPosition;
         private bool _isAGemSelected;
-        private bool _areGemsMatching;
+        private GridState _gridState = GridState.WaitingForInput;
         
         private void Awake()
         {
@@ -54,15 +62,45 @@ namespace GroundZero
                 _inactiveGems.Add(i, new());
             }
             
-            // TODO: REMOVE
             FillGrid();
         }
         
-        private void Update()
+        private void FixedUpdate()
         {
-            foreach (var gem in _activeGems)
+            var isAGemAnimating = false;
+            
+            for (int i = _activeGems.Count - 1; i >= 0; i--)
             {
-                gem.OnUpdate();
+                var gem = _activeGems[i];
+                if (!gem) continue;
+                gem.OnFixedUpdate();
+                if (gem.IsAnimating && !isAGemAnimating) isAGemAnimating = true;
+            }
+            
+            for (int i = _animatingGems.Count - 1; i >= 0; i--)
+            {
+                var gem = _animatingGems[i];
+                if (!gem) continue;
+                gem.OnFixedUpdate();
+            }
+            
+            if (!isAGemAnimating)
+            {
+                // Run multiple actions at once if possible.
+                if (_gridState == GridState.Swapping)
+                {
+                    DestroyAnyMatches();
+                    DropRemainingGems();
+                    SpawnReplacementGems();
+                }
+                else if (_gridState == GridState.Matching)
+                {
+                    DropRemainingGems();
+                    SpawnReplacementGems();
+                }
+                else if (_gridState == GridState.Dropping) SpawnReplacementGems();
+                // Loop back around to see if any new matches were made.
+                else if (_gridState == GridState.Replacing) DestroyAnyMatches();
             }
         }
         
@@ -73,8 +111,8 @@ namespace GroundZero
         /// <param name="endingScreenPosition">The mouse's screen position at the end of the swipe.</param>
         public void TrySwappingGems(Vector2 startingScreenPosition, Vector2 endingScreenPosition)
         {
-            // Prevent swapping while matching.
-            if (_areGemsMatching) return;
+            // Prevent swapping while in any state other than waiting for input.
+            if (_gridState != GridState.WaitingForInput) return;
             
             var distanceBetweenPositions = Vector2.Distance(startingScreenPosition, endingScreenPosition);
             // If the distance between the starting and ending positions is zero,
@@ -124,7 +162,14 @@ namespace GroundZero
                 _inactiveGems[gem.TypeIndex].Push(gem);
             }
             
+            foreach (var gem in _animatingGems)
+            {
+                gem.gameObject.SetActive(false);
+                _inactiveGems[gem.TypeIndex].Push(gem);
+            }
+            
             _activeGems.Clear();
+            _animatingGems.Clear();
             
             // Fill up the new grid with gems,
             // spawning in each gem visual based on the type index in the grid.
@@ -139,7 +184,7 @@ namespace GroundZero
                     var gemType = _grid.GemIndexes[y][x];
                     var gem = GetGem(gemType);
                     var position = new Vector2Int(x, y);
-                    gem.Initialize(gemType, position, GridToWorldPosition(x, y));
+                    gem.Initialize(gemType, position, GridToWorldPosition(x, y), _screenBottom, RecycleGem);
                     if (_grid.SpecialGems.ContainsKey(position)) gem.MakeSpecial(_grid.SpecialGems[position]);
                     _activeGems.Add(gem);
                 }
@@ -204,7 +249,16 @@ namespace GroundZero
         {
             // Either swap gems or select the correct gem.
             if (_isAGemSelected && position != _selectedGemPosition)
-                SwapGems(_selectedGemPosition, position);
+            {
+                if (_grid.ArePositionsAdjacent(_selectedGemPosition, position))
+                    SwapGems(_selectedGemPosition, position);
+                else
+                {
+                    _selectedGemPosition = position;
+                    // Make it seem like the gem isn't selected so it gets toggled to selected below.
+                    _isAGemSelected = false;
+                }
+            }
             else if (!_isAGemSelected) _selectedGemPosition = position;
             
             // Whether or not a gem has been selected will always be toggled when calling this method.
@@ -224,6 +278,7 @@ namespace GroundZero
         {
             var wereSwapped = _grid.SwapGems(position1, position2);
             if (!wereSwapped) return;
+            _gridState = GridState.Swapping;
             
             var index1 = GridPositionToIndex(position1.x, position1.y);
             var index2 = GridPositionToIndex(position2.x, position2.y);
@@ -235,11 +290,8 @@ namespace GroundZero
             _activeGems[index2] = gem1;
             
             // Then, tell the gems to move to their new positions.
-            gem1.MoveTo(position2, GridToWorldPosition(position2.x, position2.y));
-            gem2.MoveTo(position1, GridToWorldPosition(position1.x, position1.y));
-            
-            _areGemsMatching = true;
-            DestroyAnyMatches();
+            gem1.SwapTo(position2, GridToWorldPosition(position2.x, position2.y));
+            gem2.SwapTo(position1, GridToWorldPosition(position1.x, position1.y));
         }
         
         /// <summary>
@@ -256,9 +308,11 @@ namespace GroundZero
             if (!wereMatchesCreated)
             {
                 if (!_grid.AreTherePossibleMatches()) FillGrid();
-                _areGemsMatching = false;
+                _gridState = GridState.WaitingForInput;
                 return;
             }
+            
+            _gridState = GridState.Matching;
             
             foreach (var (position, type) in _grid.SpecialGemsCreated)
             {
@@ -272,10 +326,12 @@ namespace GroundZero
             // Then, propogate that destruction to the visuals.
             foreach (var position in _grid.DestroyedGems)
             {
-                RecycleGem(position.x, position.y);
+                var index = GridPositionToIndex(position.x, position.y);
+                var gem = _activeGems[index];
+                gem.Destroy(shouldExplode: _grid.GemsDestroyedByExplosions.Contains(position));
+                _animatingGems.Add(gem);
+                _activeGems[index] = null;
             }
-            
-            DropRemainingGems();
         }
         
         /// <summary>
@@ -283,6 +339,7 @@ namespace GroundZero
         /// </summary>
         private void DropRemainingGems()
         {
+            _gridState = GridState.Dropping;
             // First, drop the gems in the data.
             _grid.DropGems();
             
@@ -295,10 +352,8 @@ namespace GroundZero
                 // Make sure to maintain the correct order in the active gems list.
                 _activeGems[finalIndex] = gem;
                 _activeGems[initialIndex] = null;
-                gem.MoveTo(finalPosition, GridToWorldPosition(finalPosition.x, finalPosition.y));
+                gem.DropTo(finalPosition, GridToWorldPosition(initialPosition.x, initialPosition.y), GridToWorldPosition(finalPosition.x, finalPosition.y));
             }
-            
-            SpawnReplacementGems();
         }
         
         /// <summary>
@@ -306,37 +361,43 @@ namespace GroundZero
         /// </summary>
         private void SpawnReplacementGems()
         {
+            _gridState = GridState.Replacing;
             _grid.SpawnNewGems();
+            
+            // Calculate the min y position to spawn the gems at a reasonable height.
+            int minYPosition = _gridSize;
+            
+            foreach (var position in _grid.SpawnedGems)
+            {
+                if (position.y < minYPosition) minYPosition = position.y;
+            }
             
             foreach (var position in _grid.SpawnedGems)
             {
                 // First, create the gem (or grab one from the inactive pool if any are available).
                 var gemType = _grid.GemIndexes[position.y][position.x];
                 var gem = GetGem(gemType);
-                gem.Initialize(gemType, position, GridToWorldPosition(position.x, position.y));
+                var spawnPosition = GridToWorldPosition(position.x, position.y - minYPosition + _gridSize + _spawnPositionOffset);
+                // Initialize the gem at the spawn position and drop it to the correct position.
+                gem.Initialize(gemType, position, spawnPosition, _screenBottom, RecycleGem);
+                gem.DropTo(position, spawnPosition, GridToWorldPosition(position.x, position.y));
                 
                 // Then, track it in the correct position.
                 var index = GridPositionToIndex(position.x, position.y);
                 _activeGems[index] = gem;
             }
-            
-            // Loop back around to see if any new matches were made.
-            DestroyAnyMatches();
         }
         
         /// <summary>
         /// Recycles the gem at the given position by deactivating the GameObject,
         /// removing it from the active list, and placing it in the inactive pool.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        private void RecycleGem(int x, int y)
+        /// <param name="position"></param>
+        private void RecycleGem(Gem gem)
         {
-            var index = GridPositionToIndex(x, y);
-            var gem = _activeGems[index];
             gem.gameObject.SetActive(false);
             _inactiveGems[gem.TypeIndex].Push(gem);
-            _activeGems[index] = null;
+            _animatingGems.Remove(gem);
         }
     }
 }

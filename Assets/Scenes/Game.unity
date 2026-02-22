@@ -272,6 +272,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: GroundZero::GroundZero.GemManager
   _gridSize: 8
   _spaceBetweenGems: 1.5
+  _screenBottom: -8
+  _spawnPositionOffset: 1
   _gemPrefabs:
   - {fileID: 5753150303298723220, guid: 29eea8f809b414393a0578d10b4d0212, type: 3}
   - {fileID: 5753150303298723220, guid: 72b3c935815b84d9a88baf2bd81e7261, type: 3}

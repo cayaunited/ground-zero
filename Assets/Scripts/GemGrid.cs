@@ -51,6 +51,10 @@ namespace GroundZero
         /// The positions of any gems that were destroyed in after calling DestroyMatches.
         /// </summary>
         public readonly List<Vector2Int> DestroyedGems;
+        /// <summary>
+        /// The positions of any gems that were destroyed by explosive gems.
+        /// </summary>
+        public readonly List<Vector2Int> GemsDestroyedByExplosions;
         
         /// <summary>
         /// The positions of the two gems that were swapped most recently.
@@ -122,6 +126,7 @@ namespace GroundZero
             SpecialGemsCreated = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
             SpecialGems = new Dictionary<Vector2Int, SpecialGemType>(capacity: maxGemCount);
             DestroyedGems = new List<Vector2Int>(capacity: maxGemCount);
+            GemsDestroyedByExplosions = new List<Vector2Int>(capacity: maxGemCount);
             
             _potentialHorizontalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
             _potentialVerticalMatch = new List<Vector2Int>(capacity: MAX_MATCH_LENGTH);
@@ -331,11 +336,12 @@ namespace GroundZero
         public void DestroyMatches()
         {
             DestroyedGems.Clear();
+            GemsDestroyedByExplosions.Clear();
             
             foreach (var position in MatchedGems)
             {
                 if (SpecialGemsCreated.ContainsKey(position)) continue;
-                DestroyGem(position);
+                DestroyGem(position, false);
             }
             
             MatchedGems.Clear();
@@ -401,6 +407,20 @@ namespace GroundZero
         }
         
         /// <summary>
+        /// Returns if the given positions are right next to each other.
+        /// Used to allow selecting a different gem away from the currently selected one.
+        /// </summary>
+        /// <param name="position1"></param>
+        /// <param name="position2"></param>
+        /// <returns></returns>
+        public bool ArePositionsAdjacent(Vector2Int position1, Vector2Int position2)
+        {
+            var positionDifference = position1 - position2;
+            return position1.x == position2.x && Mathf.Abs(positionDifference.y) == 1
+                || position1.y == position2.y && Mathf.Abs(positionDifference.x) == 1;
+        }
+        
+        /// <summary>
         /// Returns if the gems found in positions 1 and 2 can be swapped.
         /// True if the gems at those positions have different types (indexes),
         /// and the two positions are adjacent.
@@ -415,9 +435,7 @@ namespace GroundZero
             if (type1 == type2 || position1 == position2) return false;
             
             // Make sure the positions are right next to each other.
-            var positionDifference = position1 - position2;
-            return position1.x == position2.x && Mathf.Abs(positionDifference.y) == 1
-                || position1.y == position2.y && Mathf.Abs(positionDifference.x) == 1;
+            return ArePositionsAdjacent(position1, position2);
         }
         
         /// <summary>
@@ -542,7 +560,8 @@ namespace GroundZero
         /// Destroys the gem at the given position, activating any special effects as need be.
         /// </summary>
         /// <param name="position"></param>
-        private void DestroyGem(Vector2Int position)
+        /// <param name="shouldExplode"></param>
+        private void DestroyGem(Vector2Int position, bool shouldExplode)
         {
             // Make sure any newly created special gems aren't destroyed.
             // This call is unnecessary for when DestroyGem is called in DestroyMatches,
@@ -553,6 +572,7 @@ namespace GroundZero
             
             GemIndexes[position.y][position.x] = -1;
             DestroyedGems.Add(position);
+            if (shouldExplode) GemsDestroyedByExplosions.Add(position);
             
             var isSpecial = SpecialGems.ContainsKey(position);
             if (!isSpecial) return;
@@ -576,14 +596,14 @@ namespace GroundZero
             var isAboveExplodable = position.y < Size - 1;
             
             // Destroy each gem around this one, only destroying gems at positions that are actually in the grid.
-            if (isLeftExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y));
-            if (isRightExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y));
-            if (isBelowExplodable) DestroyGem(new Vector2Int(position.x, position.y - 1));
-            if (isAboveExplodable) DestroyGem(new Vector2Int(position.x, position.y + 1));
-            if (isLeftExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y - 1));
-            if (isRightExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y - 1));
-            if (isLeftExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y + 1));
-            if (isRightExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y + 1));
+            if (isLeftExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y), true);
+            if (isRightExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y), true);
+            if (isBelowExplodable) DestroyGem(new Vector2Int(position.x, position.y - 1), true);
+            if (isAboveExplodable) DestroyGem(new Vector2Int(position.x, position.y + 1), true);
+            if (isLeftExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y - 1), true);
+            if (isRightExplodable && isBelowExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y - 1), true);
+            if (isLeftExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x - 1, position.y + 1), true);
+            if (isRightExplodable && isAboveExplodable) DestroyGem(new Vector2Int(position.x + 1, position.y + 1), true);
         }
         
         /// <summary>
@@ -612,7 +632,7 @@ namespace GroundZero
                     // Make the gem doesn't destroy itself.
                     // If either the x or the y position is different, then it's not destroying itself.
                     if ((x != position.x || y != position.y) && GemIndexes[y][x] == typeToDestroy) {
-                        DestroyGem(new Vector2Int(x, y));
+                        DestroyGem(new Vector2Int(x, y), true);
                     }
                 }
             }

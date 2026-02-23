@@ -149,9 +149,9 @@ MonoBehaviour:
   _swapDuration: 0.25
   _shrinkDuration: 0.25
   _gravityScale: 1
+  _explosionStrength: 5
   _pieceShakeDistance: 0.15
   _pieceShakeSpeed: 0.1
-  _explosionStrength: 5
   _centerPieceIndex: 3
   _explosivePieces:
   - {fileID: 1106437098767097924}
@@ -278,7 +278,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8629639753074713899}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0

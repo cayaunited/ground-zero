@@ -15,6 +15,7 @@ namespace GroundZero
         [SerializeField] private Transform _selectionCursor;
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _gemLayer;
+        [SerializeField] private PointManager _pointManager;
         
         private GemGrid _grid;
         /// <summary>
@@ -35,6 +36,10 @@ namespace GroundZero
         private Vector2Int _selectedGemPosition;
         // The grid should start off ready for the player to swap gems.
         private GridState _gridState = GridState.WaitingForInput;
+        /// <summary>
+        /// The list of positions for each destroyed gem, in world space.
+        /// </summary>
+        private readonly List<Vector2> _destroyedGemPositions = new();
         
         private void Awake()
         {
@@ -56,6 +61,9 @@ namespace GroundZero
             
             // Update all the active gems and determine if any of them are busy animating,
             // like in the middle of a swap or falling down.
+            // Also, make sure to loop through the gems backward,
+            // because gem.OnFixedUpdate could end up removing the gem from _activeGems,
+            // which causes a problem if we aren't looping backwards.
             for (int i = _activeGems.Count - 1; i >= 0; i--)
             {
                 var gem = _activeGems[i];
@@ -304,13 +312,18 @@ namespace GroundZero
                 // Make sure to refill the grid if there are any possible matches.
                 if (!_grid.AreTherePossibleMatches()) FillGrid();
                 _gridState = GridState.WaitingForInput;
+                _pointManager.ResetMultiplier();
                 return;
             }
             
+            // If the grid state was replacing, then another round of destruction
+            // triggers an increase in the score multiplier.
+            if (_gridState == GridState.Replacing) _pointManager.IncreaseMultiplier();
             _gridState = GridState.Matching;
             
             // Destroy matches in the grid data, then update the visuals based on that.
             _grid.DestroyMatches();
+            _destroyedGemPositions.Clear();
             
             foreach (var position in _grid.DestroyedGems)
             {
@@ -320,6 +333,8 @@ namespace GroundZero
                 gem.Destroy(shouldExplode: _grid.GemsDestroyedByExplosions.Contains(position));
                 _animatingGems.Add(gem);
                 _activeGems[index] = null;
+                // Make sure to track the position of the destroyed gem for a score animation.
+                _destroyedGemPositions.Add(GridToWorldPosition(position));
             }
             
             // Once the old gems are destroyed, we can create visuals for the newly created special gems,
@@ -333,6 +348,8 @@ namespace GroundZero
                 var index = GridPositionToIndex(position);
                 _activeGems[index] = gem;
             }
+            
+            _pointManager.ScorePoints(_destroyedGemPositions);
         }
         
         /// <summary>

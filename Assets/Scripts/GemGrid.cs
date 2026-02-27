@@ -89,6 +89,12 @@ namespace GroundZero
         /// Ensures the same number of each is spawned in if the grid regenerates.
         /// </summary>
         private readonly Dictionary<SpecialGemType, int> _specialGemCountByType = new();
+        /// <summary>
+        /// Whether or not this round of destruction is the first,
+        /// to prevent accidentally destroying newly created targeting gems after they fall
+        /// just because they were in a position that was swapped.
+        /// </summary>
+        private bool _isFirstDestructionRound = true;
         
         public GemGrid(int size, int typeCount)
         {
@@ -266,6 +272,7 @@ namespace GroundZero
                 SpecialGems.Remove(position2);
             }
             
+            _isFirstDestructionRound = true;
             return true;
         }
         
@@ -284,7 +291,10 @@ namespace GroundZero
             
             // If we are handling special gems and at least one of the swapped gems is a targeting gem,
             // mark both the swapped gems as having been matched, because the targeting gem should destroy them both.
-            if (createSpecialGems) {
+            // Also, make sure that we ignore this logic if this search for matches occurs before
+            // all gems are done falling but after the first few are matched.
+            if (createSpecialGems && _isFirstDestructionRound)
+            {
                 var swapPosition1 = _lastSwapPositions[0];
                 var swapPosition2 = _lastSwapPositions[1];
                 
@@ -364,6 +374,8 @@ namespace GroundZero
                 else SpecialGems.Add(position, specialType);
                 GemIndexes[position.y][position.x] = SpecialGemTypesCreated[position];
             }
+            
+            _isFirstDestructionRound = false;
         }
         
         /// <summary>

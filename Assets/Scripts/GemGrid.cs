@@ -141,6 +141,24 @@ namespace GroundZero
         }
         
         /// <summary>
+        /// Resets all fields, clearing lists.
+        /// </summary>
+        public void Initialize()
+        {
+            // Only clear data that needs to be cleared,
+            // since some of these will impact any calls to FillGrid.
+            MatchedGems.Clear();
+            DroppedGems.Clear();
+            SpawnedGems.Clear();
+            SpecialGemsCreated.Clear();
+            SpecialGemTypesCreated.Clear();
+            SpecialGems.Clear();
+            DestroyedGems.Clear();
+            GemsDestroyedByExplosions.Clear();
+            _specialGemCountByType.Clear();
+        }
+        
+        /// <summary>
         /// Randomly fills up the grid and carries over any
         /// remaining special gems from last time, if it should do so.
         /// </summary>
@@ -224,6 +242,26 @@ namespace GroundZero
             }
             
             return false;
+        }
+        
+        /// <summary>
+        /// Returns how many possible swaps result in a match.
+        /// </summary>
+        /// <returns></returns>
+        public int CountPossibleMoves()
+        {
+            int movesCount = 0;
+            
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    if (x < Size - 1 && DoesSwapCreateMatch(new Vector2Int(x, y), new Vector2Int(x + 1, y))) movesCount++;
+                    if (y < Size - 1 && DoesSwapCreateMatch(new Vector2Int(x, y), new Vector2Int(x, y + 1))) movesCount++;
+                }
+            }
+            
+            return movesCount;
         }
         
         /// <summary>

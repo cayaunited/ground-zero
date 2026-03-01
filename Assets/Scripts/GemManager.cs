@@ -15,7 +15,8 @@ namespace GroundZero
         [SerializeField] private Transform _selectionCursor;
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _gemLayer;
-        [SerializeField] private PointManager _pointManager;
+        [SerializeField] private PointsManager _pointsManager;
+        [SerializeField] private GameUI _gameUI;
         
         private GemGrid _grid;
         /// <summary>
@@ -40,22 +41,45 @@ namespace GroundZero
         /// The list of positions for each destroyed gem, in world space.
         /// </summary>
         private readonly List<Vector2> _destroyedGemPositions = new();
+        private System.Func<bool> _onDoneMatching;
+        private System.Func<bool> _onNoMovesLeft;
         
-        private void Awake()
+        /// <summary>
+        /// Creates the grid if needed, then randomly fills it, clearing out old data as needed.
+        /// </summary>
+        public void Initialize(System.Func<bool> onDoneMatching, System.Func<bool> onNoMovesLeft)
         {
-            // Initialize the grid and create empty stacks of each type of gem.
-            var gemTypeCount = _gemPrefabs.Length;
-            _grid = new GemGrid(_gridSize, gemTypeCount);
+            _onDoneMatching = onDoneMatching;
+            _onNoMovesLeft = onNoMovesLeft;
             
-            for (int i = 0; i < gemTypeCount; i++)
+            if (_grid == null)
             {
-                _inactiveGems.Add(i, new());
+                // Initialize the grid and create empty stacks of each type of gem.
+                var gemTypeCount = _gemPrefabs.Length;
+                _grid = new GemGrid(_gridSize, gemTypeCount);
+                
+                for (int i = 0; i < gemTypeCount; i++)
+                {
+                    _inactiveGems.Add(i, new());
+                }
             }
             
+            _isAGemSelected = false;
+            _selectionCursor.gameObject.SetActive(false);
+            _gridState = GridState.WaitingForInput;
+            _destroyedGemPositions.Clear();
+            _grid.Initialize();
+            
             FillGrid();
+            
+            var possibleMoveCount = _grid.CountPossibleMoves();
+            _gameUI.UpdateMoves(possibleMoveCount);
         }
         
-        private void FixedUpdate()
+        /// <summary>
+        /// Runs the main logic for animations and state management.
+        /// </summary>
+        public void OnFixedUpdate()
         {
             var isAGemAnimating = false;
             
@@ -143,6 +167,14 @@ namespace GroundZero
                 else if (gem1 && gem2 && gem1 == gem2) SelectGem(gem1.GridPosition);
                 else if (gem1 && gem2 && gem1 != gem2) SwapGems(gem1.GridPosition, gem2.GridPosition);
             }
+        }
+        
+        /// <summary>
+        /// Hides the cursor.
+        /// </summary>
+        public void OnGameEnded()
+        {
+            _selectionCursor.gameObject.SetActive(false);
         }
         
         /// <summary>
@@ -309,16 +341,13 @@ namespace GroundZero
             // If no matches were created, then the player can swap gems again.
             if (!wereMatchesCreated)
             {
-                // Make sure to refill the grid if there are any possible matches.
-                if (!_grid.AreTherePossibleMatches()) FillGrid();
-                _gridState = GridState.WaitingForInput;
-                _pointManager.ResetMultiplier();
+                OnDoneMatching();
                 return;
             }
             
             // If the grid state was replacing, then another round of destruction
             // triggers an increase in the score multiplier.
-            if (_gridState == GridState.Replacing) _pointManager.IncreaseMultiplier();
+            if (_gridState == GridState.Replacing) _pointsManager.IncreaseMultiplier();
             _gridState = GridState.Matching;
             
             // Destroy matches in the grid data, then update the visuals based on that.
@@ -349,7 +378,7 @@ namespace GroundZero
                 _activeGems[index] = gem;
             }
             
-            _pointManager.ScorePoints(_destroyedGemPositions);
+            _pointsManager.ScorePoints(_destroyedGemPositions);
         }
         
         /// <summary>
@@ -414,6 +443,33 @@ namespace GroundZero
             gem.gameObject.SetActive(false);
             _inactiveGems[gem.TypeIndex].Push(gem);
             _animatingGems.Remove(gem);
+        }
+        
+        /// <summary>
+        /// Ends the game if needed, based on the game mode.
+        /// Otherwise resets state and allows input again.
+        /// </summary>
+        private void OnDoneMatching()
+        {
+            // Let the game manager know of any game-ending events,
+            // like when done with matching or there are no possible moves left.
+            var wasGameEnded = _onDoneMatching?.Invoke() ?? false;
+            if (wasGameEnded) return;
+            
+            // Make sure to refill the grid if there are any possible matches,
+            // and not playing on limited moves.
+            var possibleMoveCount = _grid.CountPossibleMoves();
+            _gameUI.UpdateMoves(possibleMoveCount);
+            
+            if (possibleMoveCount == 0)
+            {
+                wasGameEnded = _onNoMovesLeft?.Invoke() ?? false;
+                if (wasGameEnded) return;
+                FillGrid();
+            }
+            
+            _gridState = GridState.WaitingForInput;
+            _pointsManager.ResetMultiplier();
         }
     }
 }

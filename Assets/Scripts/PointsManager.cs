@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace GroundZero
 {
-    public class PointManager : MonoBehaviour
+    public class PointsManager : MonoBehaviour
     {
         [SerializeField] private int _pointsPerMatchedGem;
         [Tooltip("How much the score multiplier should increase for each round in a row of gems being destroyed / falling.")]
@@ -25,19 +25,38 @@ namespace GroundZero
         private readonly List<PointsEffect> _activeEffects = new();
         private readonly Stack<PointsEffect> _inactiveEffects = new();
         
-        // Use Start (which runs after Awake) to make sure the points UI found all its components.
-        private void Start()
+        /// <summary>
+        /// Initializes the points system and UI, resetting data back to the start.
+        /// </summary>
+        public void Initialize()
         {
+            _score = 0;
+            _scoreMultiplier = 1;
+            _level = 1;
+            _scoreInLevel = 0;
             _pointsPerLevel = _startingPointsPerLevel;
             _pointsUI.Initialize(_startingPointsPerLevel);
+            
+            foreach (var effect in _activeEffects)
+            {
+                effect.gameObject.SetActive(false);
+                _inactiveEffects.Push(effect);
+            }
+            
+            _activeEffects.Clear();
         }
         
-        private void Update()
+        /// <summary>
+        /// Updates any animations.
+        /// </summary>
+        public void OnUpdate()
         {
             for (int i = _activeEffects.Count - 1; i >= 0; i--)
             {
                 _activeEffects[i].OnUpdate();
             }
+            
+            _pointsUI.OnUpdate();
         }
         
         /// <summary>

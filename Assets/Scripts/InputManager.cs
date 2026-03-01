@@ -8,8 +8,26 @@ namespace GroundZero
     {
         [SerializeField] private GemManager _gemManager;
         
+        private PlayerInput _input;
         private Vector2 _mouseScreenPosition;
         private Vector2 _swipeStartPosition;
+        
+        /// <summary>
+        /// Switches the input to the gameplay map so the player can swap gems again.
+        /// </summary>
+        public void OnStartGame()
+        {
+            if (!_input) _input = GetComponent<PlayerInput>();
+            _input.SwitchCurrentActionMap("Gameplay");
+        }
+        
+        /// <summary>
+        /// Switches the input to the UI map so the player can't swap gems anymore.
+        /// </summary>
+        public void OnGameEnded()
+        {
+            _input.SwitchCurrentActionMap("UI");
+        }
         
         /// <summary>
         /// Called whenever the mouse is moved.

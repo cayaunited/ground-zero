@@ -22,16 +22,35 @@ namespace GroundZero
         private float _levelFadeOutTimer;
         private int _nextLevel;
         
-        private void Awake()
+        /// <summary>
+        /// Initializes the points / level text with the correct values.
+        /// Retrieves any needed components that haven't been retrieved already.
+        /// </summary>
+        /// <param name="pointsLeftToLevelUp"></param>
+        public void Initialize(int pointsLeftToLevelUp)
         {
-            _document = GetComponent<UIDocument>();
-            _pointsLabel = _document.rootVisualElement.Q<Label>("Points");
-            _pointsIncreaseLabel = _document.rootVisualElement.Q<Label>("PointsIncrease");
-            _levelLabel = _document.rootVisualElement.Q<Label>("Level");
-            _pointsToLevelUpLabel = _document.rootVisualElement.Q<Label>("PointsToLevelUp");
+            // If the needed UI components haven't been fetched yet, then find them.
+            if (!_document)
+            {
+                _document = GetComponent<UIDocument>();
+                _pointsLabel = _document.rootVisualElement.Q<Label>("Points");
+                _pointsIncreaseLabel = _document.rootVisualElement.Q<Label>("PointsIncrease");
+                _levelLabel = _document.rootVisualElement.Q<Label>("Level");
+                _pointsToLevelUpLabel = _document.rootVisualElement.Q<Label>("PointsToLevelUp");
+            }
+            
+            // Reset the UI visuals with the starting values.
+            _pointsLabel.text = "0";
+            _pointsIncreaseLabel.style.display = DisplayStyle.None;
+            _levelLabel.text = "1";
+            _levelLabel.style.opacity = 1;
+            _pointsToLevelUpLabel.text = $"{FormatNumber(pointsLeftToLevelUp)} points to next level";
         }
         
-        private void Update()
+        /// <summary>
+        /// Updates any points-related animations.
+        /// </summary>
+        public void OnUpdate()
         {
             if (_shouldFadePointIncrease)
             {
@@ -70,15 +89,6 @@ namespace GroundZero
                 }
                 else _shouldFadeLevelIncrease = false;
             }
-        }
-        
-        /// <summary>
-        /// Initializes the points / level text with the correct values.
-        /// </summary>
-        /// <param name="pointsLeftToLevelUp"></param>
-        public void Initialize(int pointsLeftToLevelUp)
-        {
-            _pointsToLevelUpLabel.text = $"{FormatNumber(pointsLeftToLevelUp)} points to next level";
         }
         
         /// <summary>

@@ -237,7 +237,7 @@ GameObject:
   - component: {fileID: 395790648}
   - component: {fileID: 395790649}
   m_Layer: 0
-  m_Name: Point Manager
+  m_Name: Points Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -337,7 +337,8 @@ MonoBehaviour:
   _gemLayer:
     serializedVersion: 2
     m_Bits: 128
-  _pointManager: {fileID: 395790649}
+  _pointsManager: {fileID: 395790649}
+  _gameUI: {fileID: 1651373710}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,6 +708,56 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: GroundZero::GroundZero.InputManager
   _gemManager: {fileID: 488460214}
+--- !u!1 &1128219840
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1128219842}
+  - component: {fileID: 1128219841}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1128219841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128219840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64fbba07356ef4045ac17a30d0782f43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundZero.GameManager
+  _mode: 0
+  _gameDuration: 600
+  _inputManager: {fileID: 703610244}
+  _gemManager: {fileID: 488460214}
+  _pointsManager: {fileID: 395790649}
+  _gameUI: {fileID: 1651373710}
+--- !u!4 &1128219842
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128219840}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1651373706
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,6 +767,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1651373708}
+  - component: {fileID: 1651373710}
   - component: {fileID: 1651373709}
   - component: {fileID: 1651373707}
   m_Layer: 5
@@ -777,14 +829,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundZero.PointsUI
   _fadeInDuration: 0.15
   _fadeOutDuration: 0.5
+--- !u!114 &1651373710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1651373706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a50f00b61c13b40a19d43d7305d399b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundZero.GameUI
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
+  - {fileID: 1128219842}
+  - {fileID: 703610243}
   - {fileID: 488460213}
   - {fileID: 395790648}
-  - {fileID: 703610243}
   - {fileID: 327180907}
   - {fileID: 1651373708}

@@ -11,8 +11,10 @@ namespace GroundZero
         [SerializeField] private float _screenBottom;
         [Tooltip("How far off the top of the grid to spawn new gems to make sure they spawn above the screen.")]
         [SerializeField] [Min(0)] private int _spawnPositionOffset;
+        [SerializeField] [Min(0)] private float _backgroundFadeOutDuration;
         [SerializeField] private Gem[] _gemPrefabs;
         [SerializeField] private Transform _selectionCursor;
+        [SerializeField] private SpriteRenderer _gridBackground;
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _gemLayer;
         [SerializeField] private PointsManager _pointsManager;
@@ -39,8 +41,10 @@ namespace GroundZero
         /// The list of positions for each destroyed gem, in world space.
         /// </summary>
         private readonly List<Vector2> _destroyedGemPositions = new();
+        private bool _wasGameEnded;
         private System.Func<bool> _onDoneMatching;
         private System.Func<bool> _onNoMovesLeft;
+        private float _backgroundFadeTimer;
         
         // The grid should start off ready for the player to swap gems.
         public GridState GridState { get; private set; }
@@ -50,6 +54,7 @@ namespace GroundZero
         /// </summary>
         public void Initialize(System.Func<bool> onDoneMatching, System.Func<bool> onNoMovesLeft)
         {
+            _wasGameEnded = false;
             _onDoneMatching = onDoneMatching;
             _onNoMovesLeft = onNoMovesLeft;
             
@@ -63,6 +68,11 @@ namespace GroundZero
                 {
                     _inactiveGems.Add(i, new());
                 }
+                
+                for (int i = 0; i < _gridSize * _gridSize; i++)
+                {
+                    _activeGems.Add(null);
+                }
             }
             
             _isAGemSelected = false;
@@ -70,6 +80,8 @@ namespace GroundZero
             GridState = GridState.WaitingForInput;
             _destroyedGemPositions.Clear();
             _grid.Initialize();
+            _gridBackground.color = Color.white;
+            _gridBackground.gameObject.SetActive(true);
             
             FillGrid();
             
@@ -105,8 +117,19 @@ namespace GroundZero
                 gem.OnFixedUpdate();
             }
             
+            // Fade out the background if needed, turning it off when done.
+            if (_wasGameEnded && _backgroundFadeTimer < _backgroundFadeOutDuration)
+            {
+                _backgroundFadeTimer = Mathf.Min(_backgroundFadeTimer + Time.deltaTime, _backgroundFadeOutDuration);
+                _gridBackground.color = new Color(1, 1, 1, Vector2.Lerp(new Vector2(1, 0), new Vector2(0, 0),
+                    _backgroundFadeTimer / _backgroundFadeOutDuration).x);
+                if (Mathf.Approximately(_backgroundFadeTimer, _backgroundFadeOutDuration))
+                    _gridBackground.gameObject.SetActive(false);
+            }
+            
             // Make sure we don't operate on the grid if any gems are actively in a swap or drop animation.
-            if (isAGemAnimating) return;
+            // Also, make sure to not create any new matches if the game ended.
+            if (isAGemAnimating || _wasGameEnded) return;
             
             // Both destruction, falling, and spawning new gems can animate at the same time,
             // so long as the data is modified in the correct order.
@@ -176,6 +199,14 @@ namespace GroundZero
         public void OnGameEnded()
         {
             _selectionCursor.gameObject.SetActive(false);
+            _wasGameEnded = true;
+            
+            foreach (var gem in _activeGems)
+            {
+                gem.Destroy(shouldExplode: true);
+            }
+            
+            _backgroundFadeTimer = 0;
         }
         
         /// <summary>
@@ -185,20 +216,23 @@ namespace GroundZero
         private void FillGrid()
         {
             // Clean up any active or animating gems and mark them as inactive.
-            foreach (var gem in _activeGems)
+            for (int i = 0; i < _activeGems.Count; i++)
             {
+                var gem = _activeGems[i];
                 if (!gem) continue;
                 gem.gameObject.SetActive(false);
-                _inactiveGems[gem.TypeIndex].Push(gem);
+                if (!_inactiveGems[gem.TypeIndex].Contains(gem))
+                    _inactiveGems[gem.TypeIndex].Push(gem);
+                _activeGems[i] = null;
             }
             
             foreach (var gem in _animatingGems)
             {
                 gem.gameObject.SetActive(false);
-                _inactiveGems[gem.TypeIndex].Push(gem);
+                if (!_inactiveGems[gem.TypeIndex].Contains(gem))
+                    _inactiveGems[gem.TypeIndex].Push(gem);
             }
             
-            _activeGems.Clear();
             _animatingGems.Clear();
             
             // Fill the grid data, then create or reuse visuals based on that data.
@@ -217,7 +251,8 @@ namespace GroundZero
                     gem.Initialize(gemType, position, GridToWorldPosition(position), _screenBottom, RecycleGem);
                     // Turn on the special gem visual effects if need be, based on the grid data.
                     if (_grid.SpecialGems.ContainsKey(position)) gem.MakeSpecial(_grid.SpecialGems[position]);
-                    _activeGems.Add(gem);
+                    var index = GridPositionToIndex(position);
+                    _activeGems[index] = gem;
                 }
             }
         }
@@ -442,7 +477,9 @@ namespace GroundZero
         private void RecycleGem(Gem gem)
         {
             gem.gameObject.SetActive(false);
-            _inactiveGems[gem.TypeIndex].Push(gem);
+            // Make sure the inactive gems stack doesn't have duplicates.
+            if (!_inactiveGems[gem.TypeIndex].Contains(gem))
+                _inactiveGems[gem.TypeIndex].Push(gem);
             _animatingGems.Remove(gem);
         }
         

@@ -15,7 +15,7 @@ namespace GroundZero
         /// <summary>
         /// Switches the input to the gameplay map so the player can swap gems again.
         /// </summary>
-        public void OnStartGame()
+        public void OnGameStarted()
         {
             if (!_input) _input = GetComponent<PlayerInput>();
             _input.SwitchCurrentActionMap("Gameplay");
@@ -26,6 +26,7 @@ namespace GroundZero
         /// </summary>
         public void OnGameEnded()
         {
+            if (!_input) _input = GetComponent<PlayerInput>();
             _input.SwitchCurrentActionMap("UI");
         }
         

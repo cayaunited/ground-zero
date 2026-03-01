@@ -4,7 +4,6 @@ namespace GroundZero
 {
     public class GameManager : MonoBehaviour
     {
-        [SerializeField] private GameMode _mode;
         [Tooltip("How long in seconds the game lasts while in timed mode.")]
         [SerializeField] private int _gameDuration;
         [SerializeField] private InputManager _inputManager;
@@ -13,18 +12,20 @@ namespace GroundZero
         [SerializeField] private GameUI _gameUI;
         
         private bool _wasGameStarted;
+        private GameMode _mode;
         private float _gameTimer;
         
         private void Awake()
         {
-            Initialize();
+            // Give the UI the functions it needs for the buttons to start a game with a certain mode.
+            _gameUI.Initialize(() => StartGame(GameMode.Endless), () => StartGame(GameMode.Timed),
+                () => StartGame(GameMode.LimitedMoves), EndGame);
         }
         
         private void Update()
         {
-            // Only update the other managers if the game is running.
-            if (!_wasGameStarted) return;
             _pointsManager.OnUpdate();
+            if (!_wasGameStarted) return;
             
             if (_mode == GameMode.Endless)
             {
@@ -48,19 +49,20 @@ namespace GroundZero
         
         private void FixedUpdate()
         {
-            if (!_wasGameStarted) return;
             _gemManager.OnFixedUpdate();
+            if (!_wasGameStarted) return;
             // Make sure the game ends when the timer runs out if there's no action going on.
             if (_mode == GameMode.Timed && Mathf.Approximately(_gameTimer, 0)
                 && _gemManager.GridState == GridState.WaitingForInput) EndGame();
         }
         
-        private void Initialize()
+        private void StartGame(GameMode mode)
         {
             _wasGameStarted = true;
-            _gameTimer = _mode == GameMode.Timed ? _gameDuration : 0;
-            _gameUI.Initialize(_mode, _gameDuration);
-            _inputManager.OnStartGame();
+            _mode = mode;
+            _gameTimer = mode == GameMode.Timed ? _gameDuration : 0;
+            _gameUI.StartGame(mode, _gameDuration);
+            _inputManager.OnGameStarted();
             _gemManager.Initialize(OnDoneMatching, OnNoMovesLeft);
             _pointsManager.Initialize();
         }
@@ -70,7 +72,7 @@ namespace GroundZero
             _wasGameStarted = false;
             _inputManager.OnGameEnded();
             _gemManager.OnGameEnded();
-            Debug.Log("Game over");
+            _gameUI.OnGameEnded();
         }
         
         /// <summary>

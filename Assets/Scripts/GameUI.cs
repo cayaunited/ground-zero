@@ -6,28 +6,63 @@ namespace GroundZero
     [RequireComponent(typeof(UIDocument))]
     public class GameUI : MonoBehaviour
     {
+        [SerializeField] private int _secondsLeftWhenWarningStarts;
+        [SerializeField] private Color _warningColor;
+        
         private UIDocument _document;
         private Label _modeLabel;
         private Label _numberRemainingLabel;
         private Label _remainingTextLabel;
+        private VisualElement _statusContainer;
+        private VisualElement _menuContainer;
+        private Button _startEndlessButton;
+        private Button _startTimedButton;
+        private Button _startLimitedMovesButton;
+        private Button _endGameButton;
+        
         private GameMode _mode;
         
         /// <summary>
-        /// Initializes the UI to show the correct information based on the given game mode.
+        /// Finds the needed UI elements and initializes the buttons to be clickable.
+        /// </summary>
+        /// <param name="startEndlessGame"></param>
+        /// <param name="startTimedGame"></param>
+        /// <param name="startLimitedMovesGame"></param>
+        /// <param name="endGame"></param>
+        public void Initialize(System.Action startEndlessGame, System.Action startTimedGame,
+            System.Action startLimitedMovesGame, System.Action endGame)
+        {
+            if (_document) return;
+            _document = GetComponent<UIDocument>();
+            _modeLabel = _document.rootVisualElement.Q<Label>("Mode");
+            _numberRemainingLabel = _document.rootVisualElement.Q<Label>("NumberRemaining");
+            _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
+            _statusContainer = _document.rootVisualElement.Q<VisualElement>("StatusContainer");
+            _menuContainer = _document.rootVisualElement.Q<VisualElement>("MainMenu");
+            _startEndlessButton = _document.rootVisualElement.Q<Button>("EndlessButton");
+            _startTimedButton = _document.rootVisualElement.Q<Button>("TimedButton");
+            _startLimitedMovesButton = _document.rootVisualElement.Q<Button>("LimitedMovesButton");
+            _endGameButton = _document.rootVisualElement.Q<Button>("EndGameButton");
+            
+            // Call the given functions whenever the corresponding buttons are clicked.
+            _startEndlessButton.clicked += startEndlessGame;
+            _startTimedButton.clicked += startTimedGame;
+            _startLimitedMovesButton.clicked += startLimitedMovesGame;
+            _endGameButton.clicked += endGame;
+        }
+        
+        /// <summary>
+        /// Initializes the gameplay UI to show the correct information based on the given game mode.
         /// </summary>
         /// <param name="mode"></param>
         /// <param name="gameDuration"></param>
-        public void Initialize(GameMode mode, int gameDuration)
+        public void StartGame(GameMode mode, int gameDuration)
         {
-            if (!_document)
-            {
-                _document = GetComponent<UIDocument>();
-                _modeLabel = _document.rootVisualElement.Q<Label>("Mode");
-                _numberRemainingLabel = _document.rootVisualElement.Q<Label>("NumberRemaining");
-                _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
-            }
-            
             _mode = mode;
+            _menuContainer.style.display = DisplayStyle.None;
+            _statusContainer.style.display = DisplayStyle.Flex;
+            _endGameButton.style.display = DisplayStyle.Flex;
+            _numberRemainingLabel.style.color = Color.white;
             
             if (mode == GameMode.Endless)
             {
@@ -60,11 +95,18 @@ namespace GroundZero
             int hours = Mathf.FloorToInt(totalSeconds / 3600f);
             int minutes = Mathf.FloorToInt(totalSeconds / 60f) % 60;
             int seconds = totalSeconds % 60;
+            
             // Pad the seconds with an extra zero at the start if needed, so that there are always two digits visible.
             _numberRemainingLabel.text = $"{minutes}:{(seconds < 10 ? "0" : "")}{seconds}";
-            
             // Account for people playing endless for over an hour, just in case.
             if (hours > 0) _numberRemainingLabel.text = $"{hours}:{(minutes < 10 ? "0" : "")}{_numberRemainingLabel.text}";
+            
+            // Toggle the color shown when the time is running out.
+            if (_mode == GameMode.Timed && totalSeconds <= _secondsLeftWhenWarningStarts)
+            {
+                var isTimeEven = totalSeconds % 2 == 0;
+                _numberRemainingLabel.style.color = isTimeEven ? _warningColor : Color.white;
+            }
         }
         
         /// <summary>
@@ -76,6 +118,12 @@ namespace GroundZero
             if (_mode != GameMode.LimitedMoves) return;
             _numberRemainingLabel.text = $"{possibleMoveCount}";
             _remainingTextLabel.text = $"possible move{(possibleMoveCount == 1 ? "" : "s")}";
+        }
+        
+        public void OnGameEnded()
+        {
+            _menuContainer.style.display = DisplayStyle.Flex;
+            _endGameButton.style.display = DisplayStyle.None;
         }
     }
 }

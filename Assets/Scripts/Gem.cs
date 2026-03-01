@@ -329,7 +329,7 @@ namespace GroundZero
             
             foreach (var explosivePiece in _explosivePieces)
             {
-                if (explosivePiece.position.y > _screenBottom)
+                if (explosivePiece.transform.position.y > _screenBottom)
                 {
                     isPieceAboveBottom = true;
                     break;

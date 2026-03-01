@@ -6,14 +6,16 @@ namespace GroundZero
     [RequireComponent(typeof(UIDocument))]
     public class PointsUI : MonoBehaviour
     {
-        [SerializeField] private float _fadeInDuration;
-        [SerializeField] private float _fadeOutDuration;
+        [SerializeField] [Min(0)] private float _fadeInDuration;
+        [SerializeField] [Min(0)] private float _fadeOutDuration;
         
         private UIDocument _document;
         private Label _pointsLabel;
         private Label _pointsIncreaseLabel;
         private Label _levelLabel;
         private Label _pointsToLevelUpLabel;
+        private VisualElement _pointsContainer;
+        private VisualElement _levelContainer;
         private bool _shouldFadePointIncrease;
         private bool _shouldFadeLevelIncrease;
         private float _pointsFadeInTimer;
@@ -37,9 +39,13 @@ namespace GroundZero
                 _pointsIncreaseLabel = _document.rootVisualElement.Q<Label>("PointsIncrease");
                 _levelLabel = _document.rootVisualElement.Q<Label>("Level");
                 _pointsToLevelUpLabel = _document.rootVisualElement.Q<Label>("PointsToLevelUp");
+                _pointsContainer = _document.rootVisualElement.Q<VisualElement>("PointsContainer");
+                _levelContainer = _document.rootVisualElement.Q<VisualElement>("LevelContainer");
             }
             
             // Reset the UI visuals with the starting values.
+            _pointsContainer.style.display = DisplayStyle.Flex;
+            _levelContainer.style.display = DisplayStyle.Flex;
             _pointsLabel.text = "0";
             _pointsIncreaseLabel.style.display = DisplayStyle.None;
             _levelLabel.text = "1";

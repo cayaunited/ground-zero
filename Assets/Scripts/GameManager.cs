@@ -50,6 +50,9 @@ namespace GroundZero
         {
             if (!_wasGameStarted) return;
             _gemManager.OnFixedUpdate();
+            // Make sure the game ends when the timer runs out if there's no action going on.
+            if (_mode == GameMode.Timed && Mathf.Approximately(_gameTimer, 0)
+                && _gemManager.GridState == GridState.WaitingForInput) EndGame();
         }
         
         private void Initialize()

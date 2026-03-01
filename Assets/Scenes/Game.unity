@@ -737,8 +737,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64fbba07356ef4045ac17a30d0782f43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundZero.GameManager
-  _mode: 0
-  _gameDuration: 600
+  _mode: 1
+  _gameDuration: 10
   _inputManager: {fileID: 703610244}
   _gemManager: {fileID: 488460214}
   _pointsManager: {fileID: 395790649}

@@ -35,14 +35,15 @@ namespace GroundZero
         private readonly Dictionary<int, Stack<Gem>> _inactiveGems = new();
         private bool _isAGemSelected;
         private Vector2Int _selectedGemPosition;
-        // The grid should start off ready for the player to swap gems.
-        private GridState _gridState = GridState.WaitingForInput;
         /// <summary>
         /// The list of positions for each destroyed gem, in world space.
         /// </summary>
         private readonly List<Vector2> _destroyedGemPositions = new();
         private System.Func<bool> _onDoneMatching;
         private System.Func<bool> _onNoMovesLeft;
+        
+        // The grid should start off ready for the player to swap gems.
+        public GridState GridState { get; private set; }
         
         /// <summary>
         /// Creates the grid if needed, then randomly fills it, clearing out old data as needed.
@@ -66,7 +67,7 @@ namespace GroundZero
             
             _isAGemSelected = false;
             _selectionCursor.gameObject.SetActive(false);
-            _gridState = GridState.WaitingForInput;
+            GridState = GridState.WaitingForInput;
             _destroyedGemPositions.Clear();
             _grid.Initialize();
             
@@ -109,20 +110,20 @@ namespace GroundZero
             
             // Both destruction, falling, and spawning new gems can animate at the same time,
             // so long as the data is modified in the correct order.
-            if (_gridState == GridState.Swapping)
+            if (GridState == GridState.Swapping)
             {
                 DestroyAnyMatches();
                 DropRemainingGems();
                 SpawnReplacementGems();
             }
-            else if (_gridState == GridState.Matching)
+            else if (GridState == GridState.Matching)
             {
                 DropRemainingGems();
                 SpawnReplacementGems();
             }
-            else if (_gridState == GridState.Dropping) SpawnReplacementGems();
+            else if (GridState == GridState.Dropping) SpawnReplacementGems();
             // Once the empty spots have been replaced by new gems, try destroying any newly made matches.
-            else if (_gridState == GridState.Replacing) DestroyAnyMatches();
+            else if (GridState == GridState.Replacing) DestroyAnyMatches();
         }
         
         /// <summary>
@@ -135,7 +136,7 @@ namespace GroundZero
         public void TrySwappingGems(Vector2 startingScreenPosition, Vector2 endingScreenPosition)
         {
             // Gems can only be swapped if there are no actions (like matching or dropping) are taking place.
-            if (_gridState != GridState.WaitingForInput) return;
+            if (GridState != GridState.WaitingForInput) return;
             
             // Determine if a gem was clicked or tapped based on how close the start and end of the swipe on the screen was.
             var distanceBetweenPositions = Vector2.Distance(startingScreenPosition, endingScreenPosition);
@@ -313,7 +314,7 @@ namespace GroundZero
             var wereSwapped = _grid.SwapGems(position1, position2);
             if (!wereSwapped) return;
             // Since the swap in the data was successful, we can now swap the gem visuals.
-            _gridState = GridState.Swapping;
+            GridState = GridState.Swapping;
             
             var index1 = GridPositionToIndex(position1);
             var index2 = GridPositionToIndex(position2);
@@ -347,8 +348,8 @@ namespace GroundZero
             
             // If the grid state was replacing, then another round of destruction
             // triggers an increase in the score multiplier.
-            if (_gridState == GridState.Replacing) _pointsManager.IncreaseMultiplier();
-            _gridState = GridState.Matching;
+            if (GridState == GridState.Replacing) _pointsManager.IncreaseMultiplier();
+            GridState = GridState.Matching;
             
             // Destroy matches in the grid data, then update the visuals based on that.
             _grid.DestroyMatches();
@@ -386,7 +387,7 @@ namespace GroundZero
         /// </summary>
         private void DropRemainingGems()
         {
-            _gridState = GridState.Dropping;
+            GridState = GridState.Dropping;
             _grid.DropGems();
             
             foreach (var (initialPosition, finalPosition) in _grid.DroppedGems)
@@ -407,7 +408,7 @@ namespace GroundZero
         /// </summary>
         private void SpawnReplacementGems()
         {
-            _gridState = GridState.Replacing;
+            GridState = GridState.Replacing;
             _grid.SpawnNewGems();
             
             int minYPosition = _gridSize;
@@ -468,7 +469,7 @@ namespace GroundZero
                 FillGrid();
             }
             
-            _gridState = GridState.WaitingForInput;
+            GridState = GridState.WaitingForInput;
             _pointsManager.ResetMultiplier();
         }
     }

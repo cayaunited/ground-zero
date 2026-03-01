@@ -499,7 +499,6 @@ namespace GroundZero
             var type1 = GemIndexes[position1.y][position1.x];
             var type2 = GemIndexes[position2.y][position2.x];
             if (type1 == type2 || position1 == position2) return false;
-            
             return ArePositionsAdjacent(position1, position2);
         }
         
@@ -511,12 +510,12 @@ namespace GroundZero
         /// <returns></returns>
         private bool DoesSwapCreateMatch(Vector2Int position1, Vector2Int position2)
         {
-            if (!CanSwapGems(position1, position2)) return false;
-            
             // A match isn't technically made by swapping a targeting gem with another gem,
             // but we still want to count it as such so they are destroyed.
-            if (SpecialGems.ContainsKey(position1) && SpecialGems[position1] == SpecialGemType.Targeting
-                || SpecialGems.ContainsKey(position2) && SpecialGems[position2] == SpecialGemType.Targeting) return true;
+            if ((SpecialGems.ContainsKey(position1) && SpecialGems[position1] == SpecialGemType.Targeting
+                || SpecialGems.ContainsKey(position2) && SpecialGems[position2] == SpecialGemType.Targeting)
+                && position1 != position2 && ArePositionsAdjacent(position1, position2)) return true;
+            if (!CanSwapGems(position1, position2)) return false;
             
             // First, swap the gems.
             var type1 = GemIndexes[position1.y][position1.x];

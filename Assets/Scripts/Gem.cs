@@ -91,6 +91,10 @@ namespace GroundZero
             _recycleGem = recycleGem;
             IsAnimating = false;
             _animationTime = 0;
+            _isSwapping = false;
+            _isDropping = false;
+            _isShrinking = false;
+            _isExploding = false;
             
             // If we haven't already, get the SpriteRenderer and Rigidbody2D attached to this GameObject.
             // We know they both exist on this GameObject because of the RequireComponent attribute from above.
@@ -176,7 +180,7 @@ namespace GroundZero
                 {
                     _pieceDistances[i] = 0;
                     var explosivePiece = _explosivePieces[i];
-                    explosivePiece.position = (Vector2)transform.position + _pieceStartingPositions[i];
+                    explosivePiece.transform.position = (Vector2)transform.position + _pieceStartingPositions[i];
                     explosivePiece.transform.localEulerAngles = Vector3.zero;
                     explosivePiece.gameObject.SetActive(true);
                 }
@@ -246,7 +250,8 @@ namespace GroundZero
                     var explosivePiece = _explosivePieces[i];
                     var startingPosition = _pieceStartingPositions[i];
                     explosivePiece.gameObject.SetActive(true);
-                    explosivePiece.MovePositionAndRotation((Vector2)transform.position + startingPosition, 0);
+                    explosivePiece.transform.position = (Vector2)transform.position + startingPosition;
+                    explosivePiece.transform.localEulerAngles = Vector3.zero;
                     explosivePiece.gravityScale = _gravityScale;
                     // Add a force in the direction from the center to the explosive piece,
                     // plus a random direction to make sure the center piece also goes flying instead of just falling straight down.
@@ -267,7 +272,7 @@ namespace GroundZero
         private void UpdateSwapAnimation()
         {
             _swapTimer = Mathf.Min(_swapTimer + Time.fixedDeltaTime, _swapDuration);
-            _rigidbody.MovePosition(Vector2.Lerp(_positionBeforeSwap, _moveTargetPosition, _swapTimer / _swapDuration));
+            transform.position = Vector2.Lerp(_positionBeforeSwap, _moveTargetPosition, _swapTimer / _swapDuration);
             
             if (Mathf.Approximately(_swapTimer, _swapDuration))
             {
@@ -288,10 +293,10 @@ namespace GroundZero
             _yVelocity += _gravityScale * Physics2D.gravity.y * Time.fixedDeltaTime;
             // Decrease the y position based on the y velocity,
             // making sure to clamp it and prevent it from going below the target.
-            var newYPosition = Mathf.Max(_rigidbody.position.y + _yVelocity * Time.fixedDeltaTime, _moveTargetPosition.y);
-            _rigidbody.MovePosition(new Vector2(_rigidbody.position.x, newYPosition));
+            var newYPosition = Mathf.Max(transform.position.y + _yVelocity * Time.fixedDeltaTime, _moveTargetPosition.y);
+            transform.position = new Vector2(transform.position.x, newYPosition);
             
-            if (Mathf.Approximately(_rigidbody.position.y, _moveTargetPosition.y))
+            if (Mathf.Approximately(transform.position.y, _moveTargetPosition.y))
             {
                 IsAnimating = false;
                 _isDropping = false;
@@ -365,7 +370,7 @@ namespace GroundZero
                     newPosition += _pieceDistances[i] * startingPosition.normalized;
                 }
                 
-                explosivePiece.MovePosition(newPosition);
+                explosivePiece.transform.position = newPosition;
             }
         }
         

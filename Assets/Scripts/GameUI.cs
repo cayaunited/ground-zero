@@ -8,6 +8,7 @@ namespace GroundZero
     {
         [SerializeField] private int _secondsLeftWhenWarningStarts;
         [SerializeField] private Color _warningColor;
+        [SerializeField] private AudioManager _audioManager;
         
         private UIDocument _document;
         private Label _modeLabel;
@@ -101,11 +102,14 @@ namespace GroundZero
             // Account for people playing endless for over an hour, just in case.
             if (hours > 0) _numberRemainingLabel.text = $"{hours}:{(minutes < 10 ? "0" : "")}{_numberRemainingLabel.text}";
             
-            // Toggle the color shown when the time is running out.
+            // Toggle the color shown when the time is running out, and play corresponding audio.
             if (_mode == GameMode.Timed && totalSeconds <= _secondsLeftWhenWarningStarts)
             {
                 var isTimeEven = totalSeconds % 2 == 0;
                 _numberRemainingLabel.style.color = isTimeEven ? _warningColor : Color.white;
+                
+                if (totalSeconds == _secondsLeftWhenWarningStarts) _audioManager.OnStartWarning();
+                else _audioManager.PlayTickSFX();
             }
         }
         

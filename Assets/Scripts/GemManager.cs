@@ -20,6 +20,7 @@ namespace GroundZero
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _gemLayer;
         [SerializeField] private PointsManager _pointsManager;
+        [SerializeField] private AudioManager _audioManager;
         [SerializeField] private GameUI _gameUI;
         
         private GemGrid _grid;
@@ -148,7 +149,13 @@ namespace GroundZero
             }
             else if (GridState == GridState.Dropping) SpawnReplacementGems();
             // Once the empty spots have been replaced by new gems, try destroying any newly made matches.
-            else if (GridState == GridState.Replacing) DestroyAnyMatches();
+            else if (GridState == GridState.Replacing)
+            {
+                DestroyAnyMatches();
+                // Remember, the animation is done if this if block is being run,
+                // meaning the gems are done dropping.
+                _audioManager.PlayEndDropSFX();
+            }
         }
         
         /// <summary>
@@ -332,12 +339,14 @@ namespace GroundZero
         /// <param name="position"></param>
         private void SelectGem(Vector2Int position)
         {
+            var wereGemsSwapped = false;
+            
             if (_isAGemSelected && position != _selectedGemPosition)
             {
                 // Either the gems at the two selected positions are adjacent and we should swap them,
                 // or they are far enough apart that we should just select the newly clicked one instead.
                 if (_grid.ArePositionsAdjacent(_selectedGemPosition, position))
-                    SwapGems(_selectedGemPosition, position);
+                    wereGemsSwapped = SwapGems(_selectedGemPosition, position);
                 else
                 {
                     _selectedGemPosition = position;
@@ -355,6 +364,8 @@ namespace GroundZero
             // Toggle the selection cursor's visibility and move it as needed.
             _selectionCursor.gameObject.SetActive(_isAGemSelected);
             if (_isAGemSelected) _selectionCursor.transform.position = GridToWorldPosition(_selectedGemPosition);
+            
+            if (!wereGemsSwapped) _audioManager.PlaySelectSFX();
         }
         
         /// <summary>
@@ -364,11 +375,12 @@ namespace GroundZero
         /// </summary>
         /// <param name="position1"></param>
         /// <param name="position2"></param>
-        private void SwapGems(Vector2Int position1, Vector2Int position2)
+        /// <returns>True if the gems were swapped, and false otherwise.</returns>
+        private bool SwapGems(Vector2Int position1, Vector2Int position2)
         {
             // Try swapping the gems in the data.
             var wereSwapped = _grid.SwapGems(position1, position2);
-            if (!wereSwapped) return;
+            if (!wereSwapped) return false;
             // Since the swap in the data was successful, we can now swap the gem visuals.
             GridState = GridState.Swapping;
             
@@ -384,6 +396,8 @@ namespace GroundZero
             // Start the swap animations.
             gem1.SwapTo(position2, GridToWorldPosition(position2));
             gem2.SwapTo(position1, GridToWorldPosition(position1));
+            _audioManager.PlaySwapSFX();
+            return true;
         }
         
         /// <summary>
@@ -423,6 +437,11 @@ namespace GroundZero
                 _destroyedGemPositions.Add(GridToWorldPosition(position));
             }
             
+            if (_grid.GemsDestroyedByExplosions.Count > 0) _audioManager.PlayExplosionSFX();
+            
+            var wasExplosiveCreated = false;
+            var wasTargetingCreated = false;
+            
             // Once the old gems are destroyed, we can create visuals for the newly created special gems,
             // if any were created from the destroyed matches.
             foreach (var (position, specialType) in _grid.SpecialGemsCreated)
@@ -433,9 +452,15 @@ namespace GroundZero
                 gem.MakeSpecial(specialType);
                 var index = GridPositionToIndex(position);
                 _activeGems[index] = gem;
+                if (specialType == SpecialGemType.Explosive) wasExplosiveCreated = true;
+                else if (specialType == SpecialGemType.Targeting) wasTargetingCreated = true;
             }
             
             _pointsManager.ScorePoints(_destroyedGemPositions);
+            // Prefer playing the targeting gem SFX over the explosive gem effect,
+            // because targeting gems are more rare than explosive gems.
+            if (wasExplosiveCreated && !wasTargetingCreated) _audioManager.PlayCreateExplosiveSFX();
+            else if (wasTargetingCreated) _audioManager.PlayCreateTargetingSFX();
         }
         
         /// <summary>
@@ -445,6 +470,7 @@ namespace GroundZero
         {
             GridState = GridState.Dropping;
             _grid.DropGems();
+            _audioManager.PlayDropSFX();
             
             foreach (var (initialPosition, finalPosition) in _grid.DroppedGems)
             {
@@ -525,6 +551,7 @@ namespace GroundZero
                 wasGameEnded = _onNoMovesLeft?.Invoke() ?? false;
                 if (wasGameEnded) return;
                 FillGrid();
+                _audioManager.PlayRefillGridSFX();
             }
             
             GridState = GridState.WaitingForInput;

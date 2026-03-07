@@ -13,6 +13,7 @@ namespace GroundZero
         [SerializeField] private int _additionalPointsPerLevel;
         [SerializeField] private PointsEffect _effectPrefab;
         [SerializeField] private PointsUI _pointsUI;
+        [SerializeField] private AudioManager _audioManager;
         
         private int _score;
         private float _scoreMultiplier = 1;
@@ -24,6 +25,19 @@ namespace GroundZero
         private int _pointsPerLevel;
         private readonly List<PointsEffect> _activeEffects = new();
         private readonly Stack<PointsEffect> _inactiveEffects = new();
+        
+        /// <summary>
+        /// Updates any animations.
+        /// </summary>
+        private void Update()
+        {
+            for (int i = _activeEffects.Count - 1; i >= 0; i--)
+            {
+                _activeEffects[i].OnUpdate();
+            }
+            
+            _pointsUI.OnUpdate();
+        }
         
         /// <summary>
         /// Initializes the points system and UI, resetting data back to the start.
@@ -44,19 +58,6 @@ namespace GroundZero
             }
             
             _activeEffects.Clear();
-        }
-        
-        /// <summary>
-        /// Updates any animations.
-        /// </summary>
-        public void OnUpdate()
-        {
-            for (int i = _activeEffects.Count - 1; i >= 0; i--)
-            {
-                _activeEffects[i].OnUpdate();
-            }
-            
-            _pointsUI.OnUpdate();
         }
         
         /// <summary>
@@ -95,7 +96,12 @@ namespace GroundZero
             }
             
             // Only update the level UI after all the increases.
-            if (leveledUp) _pointsUI.OnLevelUp(_level, _pointsPerLevel - _scoreInLevel);
+            if (leveledUp)
+            {
+                _pointsUI.OnLevelUp(_level, _pointsPerLevel - _scoreInLevel);
+                _audioManager.OnLevelUp();
+            }
+            else _audioManager.PlayScoreSFX();
         }
         
         public void IncreaseMultiplier()

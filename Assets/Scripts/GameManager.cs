@@ -9,6 +9,7 @@ namespace GroundZero
         [SerializeField] private InputManager _inputManager;
         [SerializeField] private GemManager _gemManager;
         [SerializeField] private PointsManager _pointsManager;
+        [SerializeField] private AudioManager _audioManager;
         [SerializeField] private GameUI _gameUI;
         
         private bool _wasGameStarted;
@@ -24,7 +25,6 @@ namespace GroundZero
         
         private void Update()
         {
-            _pointsManager.OnUpdate();
             if (!_wasGameStarted) return;
             
             if (_mode == GameMode.Endless)
@@ -65,6 +65,7 @@ namespace GroundZero
             _inputManager.OnGameStarted();
             _gemManager.Initialize(OnDoneMatching, OnNoMovesLeft);
             _pointsManager.Initialize();
+            _audioManager.PlayStartSFX();
         }
         
         private void EndGame()
@@ -73,6 +74,7 @@ namespace GroundZero
             _inputManager.OnGameEnded();
             _gemManager.OnGameEnded();
             _gameUI.OnGameEnded();
+            _audioManager.OnGameEnded();
         }
         
         /// <summary>

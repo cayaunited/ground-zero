@@ -7,6 +7,8 @@ namespace GroundZero
     {
         [SerializeField] [Min(3)] private int _gridSize;
         [SerializeField] [Min(0)] private float _spaceBetweenGems;
+        [Tooltip("How far between the start of a swipe and the end before it counts as a swipe, rather than trying to click on a gem. Distance in screen space, not world space.")]
+        [SerializeField] [Min(0)] private float _swipeDistanceThreshold;
         [Tooltip("The y position of the bottom of the screen, at which gem pieces are no longer visible.")]
         [SerializeField] private float _screenBottom;
         [Tooltip("How far off the top of the grid to spawn new gems to make sure they spawn above the screen.")]
@@ -150,7 +152,7 @@ namespace GroundZero
         }
         
         /// <summary>
-        /// Attempts to swap the gems at the given positions.
+        /// Attempts to swap the gem at the first position in the direction the mouse moved.
         /// If the given positions are the same, it just selects or unselects the gem at that position.
         /// If a gem is clicked while another is selected, then it tries to swap them.
         /// </summary>
@@ -163,7 +165,7 @@ namespace GroundZero
             
             // Determine if a gem was clicked or tapped based on how close the start and end of the swipe on the screen was.
             var distanceBetweenPositions = Vector2.Distance(startingScreenPosition, endingScreenPosition);
-            var wasGemTapped = Mathf.Approximately(distanceBetweenPositions, 0);
+            var wasGemTapped = distanceBetweenPositions < _swipeDistanceThreshold;
             
             if (wasGemTapped)
             {
@@ -178,18 +180,37 @@ namespace GroundZero
             }
             else
             {
-                // Similarly to the code above, find the gems corresponding to where the mouse was pressed and released.
                 var startingWorldPosition = ScreenToWorldPosition(startingScreenPosition);
                 var endingWorldPosition = ScreenToWorldPosition(endingScreenPosition);
+                // Try to find a gem at the swipe's starting position.
                 var gemCollider1 = Physics2D.OverlapPoint(startingWorldPosition, _gemLayer);
-                var gemCollider2 = Physics2D.OverlapPoint(endingWorldPosition, _gemLayer);
                 var gem1 = gemCollider1 ? gemCollider1.GetComponent<Gem>() : null;
-                var gem2 = gemCollider2 ? gemCollider2.GetComponent<Gem>() : null;
+                if (!gem1) return;
                 
-                if (gem1 && !gem2) SelectGem(gem1.GridPosition);
-                else if (!gem1 && gem2) SelectGem(gem2.GridPosition);
-                else if (gem1 && gem2 && gem1 == gem2) SelectGem(gem1.GridPosition);
-                else if (gem1 && gem2 && gem1 != gem2) SwapGems(gem1.GridPosition, gem2.GridPosition);
+                // Based on the direction of swiping, determine what gems to attempt to swap.
+                var difference = endingWorldPosition - startingWorldPosition;
+                Vector2Int swipeDirection;
+                
+                // If the swipe was more in a horizontal direction, then swipe left or right.
+                if (Mathf.Abs(difference.x) >= Mathf.Abs(difference.y))
+                {
+                    if (difference.x > 0) swipeDirection = Vector2Int.right;
+                    else swipeDirection = Vector2Int.left;
+                }
+                // Otherwise, swipe up or down.
+                else
+                {
+                    if (difference.y > 0) swipeDirection = Vector2Int.up;
+                    else swipeDirection = Vector2Int.down;
+                }
+                
+                var position2 = gem1.GridPosition + swipeDirection;
+                if (position2.x < 0 || position2.x >= _gridSize || position2.y < 0 || position2.y >= _gridSize) return;
+                var gem2 = _activeGems[GridPositionToIndex(position2)];
+                if (!gem2) return;
+                SwapGems(gem1.GridPosition, gem2.GridPosition);
+                _isAGemSelected = false;
+                _selectionCursor.gameObject.SetActive(false);
             }
         }
         

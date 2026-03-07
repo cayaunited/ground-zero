@@ -663,7 +663,6 @@ MonoBehaviour:
   _additionalPointsPerLevel: 500
   _effectPrefab: {fileID: 6540547346077301708, guid: 68502166bb3844ccd92ed4c4858c58c0, type: 3}
   _pointsUI: {fileID: 1651373709}
-  _audioManager: {fileID: 909752401}
 --- !u!1 &406958384
 GameObject:
   m_ObjectHideFlags: 0
@@ -880,6 +879,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: GroundZero::GroundZero.GemManager
   _gridSize: 8
   _spaceBetweenGems: 1.5
+  _swipeDistanceThreshold: 10
   _screenBottom: -8
   _spawnPositionOffset: 1
   _backgroundFadeOutDuration: 0.25
@@ -1316,7 +1316,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundZero.AudioManager
   _intensityFadeDuration: 3
-  _intensityIncreaseLevelInterval: 3
   _backgroundMusicSources:
   - {fileID: 304550991}
   - {fileID: 185379313}
@@ -1354,7 +1353,6 @@ MonoBehaviour:
   _inputManager: {fileID: 703610244}
   _gemManager: {fileID: 488460214}
   _pointsManager: {fileID: 395790649}
-  _audioManager: {fileID: 909752401}
   _gameUI: {fileID: 1651373710}
 --- !u!4 &1128219842
 Transform:
@@ -1454,7 +1452,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a50f00b61c13b40a19d43d7305d399b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundZero.GameUI
-  _secondsLeftWhenWarningStarts: 10
+  _secondsLeftWhenWarningStarts: 30
   _warningColor: {r: 1, g: 0.3137255, b: 0.3137255, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

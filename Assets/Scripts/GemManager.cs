@@ -48,6 +48,11 @@ namespace GroundZero
         private System.Func<bool> _onDoneMatching;
         private System.Func<bool> _onNoMovesLeft;
         private float _backgroundFadeTimer;
+        /// <summary>
+        /// When the first gem finishes dropping in a column, the end drop sound should play,
+        /// so track when the first gem drops in a cycle.
+        /// </summary>
+        private readonly Dictionary<int, bool> _hasFirstGemDropped = new();
         
         // The grid should start off ready for the player to swap gems.
         public GridState GridState { get; private set; }
@@ -149,13 +154,7 @@ namespace GroundZero
             }
             else if (GridState == GridState.Dropping) SpawnReplacementGems();
             // Once the empty spots have been replaced by new gems, try destroying any newly made matches.
-            else if (GridState == GridState.Replacing)
-            {
-                DestroyAnyMatches();
-                // Remember, the animation is done if this if block is being run,
-                // meaning the gems are done dropping.
-                _audioManager.PlayEndDropSFX();
-            }
+            else if (GridState == GridState.Replacing) DestroyAnyMatches();
         }
         
         /// <summary>
@@ -276,7 +275,7 @@ namespace GroundZero
                     // or create a new gem of that type if there aren't any available in the pool.
                     var gem = GetGem(gemType);
                     // Initialize the gem, passing in needed data for the animations to work properly.
-                    gem.Initialize(gemType, position, GridToWorldPosition(position), _screenBottom, RecycleGem);
+                    gem.Initialize(gemType, position, GridToWorldPosition(position), _screenBottom, RecycleGem, OnGemDropped);
                     // Turn on the special gem visual effects if need be, based on the grid data.
                     if (_grid.SpecialGems.ContainsKey(position)) gem.MakeSpecial(_grid.SpecialGems[position]);
                     var index = GridPositionToIndex(position);
@@ -448,7 +447,7 @@ namespace GroundZero
             {
                 var gemType = _grid.SpecialGemTypesCreated[position];
                 var gem = GetGem(gemType);
-                gem.Initialize(gemType, position, GridToWorldPosition(position), _screenBottom, RecycleGem);
+                gem.Initialize(gemType, position, GridToWorldPosition(position), _screenBottom, RecycleGem, OnGemDropped);
                 gem.MakeSpecial(specialType);
                 var index = GridPositionToIndex(position);
                 _activeGems[index] = gem;
@@ -471,6 +470,7 @@ namespace GroundZero
             GridState = GridState.Dropping;
             _grid.DropGems();
             _audioManager.PlayDropSFX();
+            _hasFirstGemDropped.Clear();
             
             foreach (var (initialPosition, finalPosition) in _grid.DroppedGems)
             {
@@ -509,7 +509,7 @@ namespace GroundZero
                 // Calculate how high above the grid the newly spawned gems should drop from,
                 // ensuring that the bottom-most spawned gems are the first ones to appear when falling.
                 var spawnPosition = GridToWorldPosition(new Vector2Int(position.x, position.y - minYPosition + _gridSize + _spawnPositionOffset));
-                gem.Initialize(gemType, position, spawnPosition, _screenBottom, RecycleGem);
+                gem.Initialize(gemType, position, spawnPosition, _screenBottom, RecycleGem, OnGemDropped);
                 gem.DropTo(position, spawnPosition, GridToWorldPosition(position));
                 var index = GridPositionToIndex(position);
                 _activeGems[index] = gem;
@@ -556,6 +556,17 @@ namespace GroundZero
             
             GridState = GridState.WaitingForInput;
             _pointsManager.ResetMultiplier();
+        }
+        
+        /// <summary>
+        /// Plays end drop sound effect once the first gem has dropped in a cycle.
+        /// </summary>
+        /// <param name="x"></param>
+        private void OnGemDropped(int x)
+        {
+            if (_hasFirstGemDropped.ContainsKey(x)) return;
+            _audioManager.PlayEndDropSFX();
+            _hasFirstGemDropped.Add(x, true);
         }
     }
 }

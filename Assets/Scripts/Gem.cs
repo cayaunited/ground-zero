@@ -56,6 +56,7 @@ namespace GroundZero
         private float _swapTimer;
         private bool _isDropping;
         private float _yVelocity;
+        private System.Action<int> _onDoneFalling;
         
         // For matches and explosions.
         private bool _isShrinking;
@@ -77,7 +78,9 @@ namespace GroundZero
         /// <param name="worldPosition"></param>
         /// <param name="screenBottom">The y position of the bottom of the screen. Used to determine when all exploded pieces are no longer visible.</param>
         /// <param name="recycleGem">The callback function used to recycle this gem when its animations finish.</param>
-        public void Initialize(int typeIndex, Vector2Int gridPosition, Vector2 worldPosition, float screenBottom, System.Action<Gem> recycleGem)
+        /// <param name="onDoneFalling"></param>
+        public void Initialize(int typeIndex, Vector2Int gridPosition, Vector2 worldPosition,
+            float screenBottom, System.Action<Gem> recycleGem, System.Action<int> onDoneFalling)
         {
             // Set / reset all needed fields to either the given values or initial values depending on the field.
             TypeIndex = typeIndex;
@@ -89,6 +92,7 @@ namespace GroundZero
             
             _screenBottom = screenBottom;
             _recycleGem = recycleGem;
+            _onDoneFalling = onDoneFalling;
             IsAnimating = false;
             _animationTime = 0;
             _isSwapping = false;
@@ -301,6 +305,7 @@ namespace GroundZero
                 IsAnimating = false;
                 _isDropping = false;
                 _yVelocity = 0;
+                _onDoneFalling?.Invoke(GridPosition.x);
             }
         }
         

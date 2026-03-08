@@ -1451,7 +1451,7 @@ MonoBehaviour:
   _normalPitch: 1
   _warningPitch: 1.1
   _pitchFadeDuration: 3
-  _musicVolume: 0.5
+  _musicVolume: 0.25
   _minSFXVolume: 0.95
   _maxSFXVolume: 1
   _minSFXPitch: 0.95
@@ -1461,7 +1461,7 @@ MonoBehaviour:
   - {fileID: 185379313}
   - {fileID: 130277105}
   _soundEffectsSource: {fileID: 430710853}
-  _selectSFX: {fileID: 8300000, guid: ec928f1a1e73749a79b55c865f82a985, type: 3}
+  _selectSFX: {fileID: 8300000, guid: 09862da87a4964f0a856c91e5afa6d87, type: 3}
   _swapSFX: {fileID: 8300000, guid: d22e46acea3814c339e43f2845db4854, type: 3}
   _scoreSFX: {fileID: 8300000, guid: 34dccb111d39546278ca28de37ecdeaa, type: 3}
   _levelUpSFX: {fileID: 8300000, guid: ca1a5514b74a54ac4acc255f341a3a4a, type: 3}
@@ -1469,15 +1469,15 @@ MonoBehaviour:
   _endGameSFX: {fileID: 8300000, guid: 5bf378f94cbd34f1b9630acbed8110e4, type: 3}
   _warningSFX: {fileID: 8300000, guid: b715eff6d315d4e5ea8264cd6085a609, type: 3}
   _tickSFX:
-  - {fileID: 8300000, guid: 1ea2ae2fc8f2b4393aa1f3ccd39d6cb0, type: 3}
-  - {fileID: 8300000, guid: 85c091914210d4e3493ec154916695a8, type: 3}
+  - {fileID: 8300000, guid: ec15d5db1ea3b48b1a4f16c06de7669c, type: 3}
+  - {fileID: 8300000, guid: 7847f544e10de41eba1a986647e5c5e6, type: 3}
   _explosionSFX:
   - {fileID: 8300000, guid: 83d15a7648d7449dfa4c1de5af3b1b26, type: 3}
   - {fileID: 8300000, guid: 80fbca54f073b4c1cae23d1de1112542, type: 3}
   _createExplosiveSFX: {fileID: 8300000, guid: fcc0e35e590884fdc82da30bbbbf4207, type: 3}
   _createTargetingSFX: {fileID: 8300000, guid: b03b0c22ade8942d792739e2ed2c118e, type: 3}
   _refillGridSFX: {fileID: 8300000, guid: 45b23a70396c84abbb44b494124b3775, type: 3}
-  _dropSFX: {fileID: 8300000, guid: d0cfc7c11d80b407396207bdf4725528, type: 3}
+  _dropSFX: {fileID: 8300000, guid: 9f91f4232b1bf4fc7adcd803bbc5edbf, type: 3}
   _endDropSFX: {fileID: 8300000, guid: 4aed7e4204bfb46ed8bfb111b460aae2, type: 3}
 --- !u!1 &1128219840
 GameObject:

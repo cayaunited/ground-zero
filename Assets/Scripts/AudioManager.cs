@@ -21,6 +21,7 @@ namespace GroundZero
         [SerializeField] private AudioSource[] _backgroundMusicSources;
         [SerializeField] private AudioSource _soundEffectsSource;
         [SerializeField] private AudioClip _selectSFX;
+        [SerializeField] private AudioClip _selectErrorSFX;
         [SerializeField] private AudioClip _swapSFX;
         [SerializeField] private AudioClip _scoreSFX;
         [SerializeField] private AudioClip _levelUpSFX;
@@ -111,6 +112,7 @@ namespace GroundZero
         }
         
         public void PlaySelectSFX() => PlaySoundEffect(_selectSFX);
+        public void PlaySelectErrorSFX() => PlaySoundEffect(_selectErrorSFX);
         public void PlaySwapSFX() => PlaySoundEffect(_swapSFX);
         public void PlayScoreSFX() => PlaySoundEffect(_scoreSFX);
         public void PlayStartSFX() => PlaySoundEffect(_startGameSFX);

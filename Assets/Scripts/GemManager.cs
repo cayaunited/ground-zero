@@ -339,13 +339,17 @@ namespace GroundZero
         private void SelectGem(Vector2Int position)
         {
             var wereGemsSwapped = false;
+            var failedToSwap = false;
             
             if (_isAGemSelected && position != _selectedGemPosition)
             {
                 // Either the gems at the two selected positions are adjacent and we should swap them,
                 // or they are far enough apart that we should just select the newly clicked one instead.
                 if (_grid.ArePositionsAdjacent(_selectedGemPosition, position))
+                {
                     wereGemsSwapped = SwapGems(_selectedGemPosition, position);
+                    if (!wereGemsSwapped) failedToSwap = true;
+                }
                 else
                 {
                     _selectedGemPosition = position;
@@ -364,7 +368,8 @@ namespace GroundZero
             _selectionCursor.gameObject.SetActive(_isAGemSelected);
             if (_isAGemSelected) _selectionCursor.transform.position = GridToWorldPosition(_selectedGemPosition);
             
-            if (!wereGemsSwapped) _audioManager.PlaySelectSFX();
+            if (!wereGemsSwapped && failedToSwap) _audioManager.PlaySelectErrorSFX();
+            else if (!wereGemsSwapped) _audioManager.PlaySelectSFX();
         }
         
         /// <summary>

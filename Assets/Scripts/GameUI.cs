@@ -8,10 +8,12 @@ namespace GroundZero
     {
         [SerializeField] private int _secondsLeftWhenWarningStarts;
         [SerializeField] private Color _warningColor;
+        [Tooltip("How small the menu scale is to start the open animation.")]
+        [SerializeField] [Range(0, 1)] private float _menuStartScale;
+        [SerializeField] [Min(0)] private float _openMenuDuration;
         [SerializeField] private AudioManager _audioManager;
         
         private UIDocument _document;
-        private Label _modeLabel;
         private Label _numberRemainingLabel;
         private Label _remainingTextLabel;
         private VisualElement _statusContainer;
@@ -22,6 +24,18 @@ namespace GroundZero
         private Button _endGameButton;
         
         private GameMode _mode;
+        private float _openMenuTimer;
+        
+        private void Update()
+        {
+            if (!Mathf.Approximately(_openMenuTimer, 0))
+            {
+                _openMenuTimer = Mathf.Max(_openMenuTimer - Time.deltaTime, 0);
+                _menuContainer.style.opacity = Vector2.Lerp(new Vector2(0, 0), new Vector2(1, 0), 1 - _openMenuTimer / _openMenuDuration).x;
+                var scale = Vector2.Lerp(new Vector2(_menuStartScale, 0), new Vector2(1, 0), 1 - _openMenuTimer / _openMenuDuration).x;
+                _menuContainer.style.scale = new Vector2(scale, scale);
+            }
+        }
         
         /// <summary>
         /// Finds the needed UI elements and initializes the buttons to be clickable.
@@ -35,7 +49,6 @@ namespace GroundZero
         {
             if (_document) return;
             _document = GetComponent<UIDocument>();
-            _modeLabel = _document.rootVisualElement.Q<Label>("Mode");
             _numberRemainingLabel = _document.rootVisualElement.Q<Label>("NumberRemaining");
             _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
             _statusContainer = _document.rootVisualElement.Q<VisualElement>("StatusContainer");
@@ -67,19 +80,16 @@ namespace GroundZero
             
             if (mode == GameMode.Endless)
             {
-                _modeLabel.text = "Endless";
                 _numberRemainingLabel.text = "0:00";
                 _remainingTextLabel.text = "elapsed";
             }
             else if (mode == GameMode.Timed)
             {
-                _modeLabel.text = "Timed";
                 UpdateTime(gameDuration);
                 _remainingTextLabel.text = "remaining";
             }
             else if (mode == GameMode.LimitedMoves)
             {
-                _modeLabel.text = "Limited Moves";
                 _numberRemainingLabel.text = "0";
                 _remainingTextLabel.text = "possible moves";
             }
@@ -128,6 +138,7 @@ namespace GroundZero
         {
             _menuContainer.style.display = DisplayStyle.Flex;
             _endGameButton.style.display = DisplayStyle.None;
+            _openMenuTimer = _openMenuDuration;
         }
     }
 }

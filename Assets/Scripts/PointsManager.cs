@@ -49,7 +49,7 @@ namespace GroundZero
             _level = 1;
             _scoreInLevel = 0;
             _pointsPerLevel = _startingPointsPerLevel;
-            _pointsUI.Initialize(_startingPointsPerLevel);
+            _pointsUI.Initialize();
             
             foreach (var effect in _activeEffects)
             {
@@ -80,7 +80,7 @@ namespace GroundZero
                 _activeEffects.Add(pointsEffect);
             }
             
-            _pointsUI.OnPointsIncrease(_score, totalIncreaseAmount, _pointsPerLevel - _scoreInLevel);
+            _pointsUI.OnPointsIncrease(_score, totalIncreaseAmount, 100f * _scoreInLevel / _pointsPerLevel);
             var leveledUp = false;
             
             // Level up if enough points have been scored,
@@ -98,7 +98,7 @@ namespace GroundZero
             // Only update the level UI after all the increases.
             if (leveledUp)
             {
-                _pointsUI.OnLevelUp(_level, _pointsPerLevel - _scoreInLevel);
+                _pointsUI.OnLevelUp(_level, 100f * _scoreInLevel / _pointsPerLevel);
                 _audioManager.OnLevelUp();
             }
             else _audioManager.PlayScoreSFX();

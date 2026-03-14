@@ -1,0 +1,31 @@
+:root {
+}
+
+.button {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Nova_Square/NovaSquare-Regular.ttf?fileID=12800000&guid=8dc96b77b22c240b28d89bd45ab5bd29&type=3#NovaSquare-Regular");
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    background-image: url("project://database/Assets/Sprites/Button.png?fileID=21300000&guid=7cb05915e073947898164b7a66241b36&type=3#Button");
+    background-color: rgba(188, 188, 188, 0);
+    padding-top: 16px;
+    padding-right: 16px;
+    padding-bottom: 16px;
+    padding-left: 16px;
+    scale: 1 1;
+    transition-property: scale;
+    transition-duration: 0.1s;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.button:hover {
+    scale: 1.05 1.05;
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.78);
+}

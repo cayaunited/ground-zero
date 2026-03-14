@@ -13,7 +13,7 @@ namespace GroundZero
         private Label _pointsLabel;
         private Label _pointsIncreaseLabel;
         private Label _levelLabel;
-        private Label _pointsToLevelUpLabel;
+        private VisualElement _levelFill;
         private VisualElement _pointsContainer;
         private VisualElement _levelContainer;
         private bool _shouldFadePointIncrease;
@@ -28,8 +28,7 @@ namespace GroundZero
         /// Initializes the points / level text with the correct values.
         /// Retrieves any needed components that haven't been retrieved already.
         /// </summary>
-        /// <param name="pointsLeftToLevelUp"></param>
-        public void Initialize(int pointsLeftToLevelUp)
+        public void Initialize()
         {
             // If the needed UI components haven't been fetched yet, then find them.
             if (!_document)
@@ -38,7 +37,7 @@ namespace GroundZero
                 _pointsLabel = _document.rootVisualElement.Q<Label>("Points");
                 _pointsIncreaseLabel = _document.rootVisualElement.Q<Label>("PointsIncrease");
                 _levelLabel = _document.rootVisualElement.Q<Label>("Level");
-                _pointsToLevelUpLabel = _document.rootVisualElement.Q<Label>("PointsToLevelUp");
+                _levelFill = _document.rootVisualElement.Q<VisualElement>("LevelFill");
                 _pointsContainer = _document.rootVisualElement.Q<VisualElement>("PointsContainer");
                 _levelContainer = _document.rootVisualElement.Q<VisualElement>("LevelContainer");
             }
@@ -50,7 +49,7 @@ namespace GroundZero
             _pointsIncreaseLabel.style.display = DisplayStyle.None;
             _levelLabel.text = "1";
             _levelLabel.style.opacity = 1;
-            _pointsToLevelUpLabel.text = $"{FormatNumber(pointsLeftToLevelUp)} points to next level";
+            _levelFill.style.height = new Length(0, LengthUnit.Percent);
         }
         
         /// <summary>
@@ -102,11 +101,11 @@ namespace GroundZero
         /// </summary>
         /// <param name="points"></param>
         /// <param name="increaseAmount"></param>
-        /// <param name="pointsLeftToLevelUp"></param>
-        public void OnPointsIncrease(int points, int increaseAmount, int pointsLeftToLevelUp)
+        /// <param name="levelProgress"></param>
+        public void OnPointsIncrease(int points, int increaseAmount, float levelProgress)
         {
             _pointsLabel.text = FormatNumber(points);
-            _pointsToLevelUpLabel.text = $"{FormatNumber(pointsLeftToLevelUp)} points to next level";
+            _levelFill.style.height = new Length(levelProgress, LengthUnit.Percent);
             _pointsIncreaseLabel.text = $"+ {FormatNumber(increaseAmount)}";
             _pointsIncreaseLabel.style.display = DisplayStyle.Flex;
             _pointsIncreaseLabel.style.opacity = 0;
@@ -119,11 +118,11 @@ namespace GroundZero
         /// Updates the level UI with a fade in and out animation.
         /// </summary>
         /// <param name="level"></param>
-        /// <param name="pointsLeftToLevelUp"></param>
-        public void OnLevelUp(int level, int pointsLeftToLevelUp)
+        /// <param name="levelProgress"></param>
+        public void OnLevelUp(int level, float levelProgress)
         {
             _nextLevel = level;
-            _pointsToLevelUpLabel.text = $"{FormatNumber(pointsLeftToLevelUp)} points to next level";
+            _levelFill.style.height = new Length(levelProgress, LengthUnit.Percent);
             _shouldFadeLevelIncrease = true;
             _levelFadeInTimer = 0;
             _levelFadeOutTimer = 0;

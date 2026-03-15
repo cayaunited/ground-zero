@@ -160,7 +160,7 @@ AudioSource:
   m_GameObject: {fileID: 130277103}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 7286454987829061527, guid: b8b82975f74ff4a319f1c7df7f56927c, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: cbbd79083f6464c658cedef85426e6a0, type: 3}
   m_PlayOnAwake: 1
@@ -289,7 +289,7 @@ AudioSource:
   m_GameObject: {fileID: 185379311}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 7286454987829061527, guid: b8b82975f74ff4a319f1c7df7f56927c, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 09193cf5373ca4b7da661e4dd1add167, type: 3}
   m_PlayOnAwake: 1
@@ -418,7 +418,7 @@ AudioSource:
   m_GameObject: {fileID: 304550989}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 7286454987829061527, guid: b8b82975f74ff4a319f1c7df7f56927c, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: fda5c0ed0d41d4f628ca21111d56ffcb, type: 3}
   m_PlayOnAwake: 1
@@ -784,7 +784,7 @@ AudioSource:
   m_GameObject: {fileID: 430710851}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -2030053270760202277, guid: b8b82975f74ff4a319f1c7df7f56927c, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
@@ -1451,7 +1451,6 @@ MonoBehaviour:
   _normalPitch: 1
   _warningPitch: 1.15
   _pitchFadeDuration: 3
-  _musicVolume: 0.5
   _minSFXVolume: 0.95
   _maxSFXVolume: 1
   _minSFXPitch: 0.95
@@ -1461,6 +1460,7 @@ MonoBehaviour:
   - {fileID: 185379313}
   - {fileID: 130277105}
   _soundEffectsSource: {fileID: 430710853}
+  _audioMixer: {fileID: 24100000, guid: b8b82975f74ff4a319f1c7df7f56927c, type: 2}
   _selectSFX: {fileID: 8300000, guid: ec928f1a1e73749a79b55c865f82a985, type: 3}
   _selectErrorSFX: {fileID: 8300000, guid: 09862da87a4964f0a856c91e5afa6d87, type: 3}
   _swapSFX: {fileID: 8300000, guid: d22e46acea3814c339e43f2845db4854, type: 3}
@@ -1617,6 +1617,8 @@ MonoBehaviour:
   _warningColor: {r: 1, g: 0.3137255, b: 0.3137255, a: 1}
   _menuStartScale: 0.75
   _openMenuDuration: 0.1
+  _defaultMusicVolume: 0.5
+  _defaultSFXVolume: 1
   _audioManager: {fileID: 909752401}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -16,7 +16,7 @@ namespace GroundZero
         private GameMode _mode;
         private float _gameTimer;
         
-        private void Awake()
+        private void Start()
         {
             // Give the UI the functions it needs for the buttons to start a game with a certain mode.
             _gameUI.Initialize(() => StartGame(GameMode.Endless), () => StartGame(GameMode.Timed),
@@ -65,7 +65,7 @@ namespace GroundZero
             _inputManager.OnGameStarted();
             _gemManager.Initialize(OnDoneMatching, OnNoMovesLeft);
             _pointsManager.Initialize();
-            _audioManager.PlayStartSFX();
+            _audioManager.PlaySelectSFX();
         }
         
         private void EndGame()

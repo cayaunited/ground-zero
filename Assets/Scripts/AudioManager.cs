@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace GroundZero
 {
@@ -9,7 +10,6 @@ namespace GroundZero
         [Tooltip("The pitch during the last bit of time in a timed game.")]
         [SerializeField] private float _warningPitch;
         [SerializeField] [Min(0)] private float _pitchFadeDuration;
-        [SerializeField] [Range(0, 1)] private float _musicVolume;
         [Tooltip("The minimum volume an SFX can randomly play at.")]
         [SerializeField] [Range(0, 1)] private float _minSFXVolume;
         [Tooltip("The maximum volume an SFX can randomly play at.")]
@@ -20,6 +20,7 @@ namespace GroundZero
         [SerializeField] [Min(0)] private float _maxSFXPitch;
         [SerializeField] private AudioSource[] _backgroundMusicSources;
         [SerializeField] private AudioSource _soundEffectsSource;
+        [SerializeField] private AudioMixer _audioMixer;
         [SerializeField] private AudioClip _selectSFX;
         [SerializeField] private AudioClip _selectErrorSFX;
         [SerializeField] private AudioClip _swapSFX;
@@ -54,7 +55,7 @@ namespace GroundZero
             // Make sure the first music track is audible, and every other is muted.
             for (int i = 0; i < _backgroundMusicSources.Length; i++)
             {
-                _backgroundMusicSources[i].volume = i == 0 ? _musicVolume : 0;
+                _backgroundMusicSources[i].volume = i == 0 ? 1 : 0;
             }
         }
         
@@ -66,11 +67,11 @@ namespace GroundZero
                 var nextSource = _backgroundMusicSources[_nextIntensity];
                 
                 _intensityFadeTimer = Mathf.Min(_intensityFadeTimer + Time.deltaTime, _intensityFadeDuration);
-                var newCurrentVolume = Vector2.Lerp(new Vector2(_musicVolume, 0), new Vector2(0, 0), _intensityFadeTimer / _intensityFadeDuration).x;
+                var newCurrentVolume = Vector2.Lerp(new Vector2(1, 0), new Vector2(0, 0), _intensityFadeTimer / _intensityFadeDuration).x;
                 
                 // Crossfade the music tracks to have the opposite volume of each other.
                 currentSource.volume = newCurrentVolume;
-                nextSource.volume = _musicVolume - newCurrentVolume;
+                nextSource.volume = 1 - newCurrentVolume;
                 
                 if (Mathf.Approximately(_intensityFadeTimer, _intensityFadeDuration))
                 {
@@ -115,7 +116,6 @@ namespace GroundZero
         public void PlaySelectErrorSFX() => PlaySoundEffect(_selectErrorSFX);
         public void PlaySwapSFX() => PlaySoundEffect(_swapSFX);
         public void PlayScoreSFX() => PlaySoundEffect(_scoreSFX);
-        public void PlayStartSFX() => PlaySoundEffect(_startGameSFX);
         public void PlayExplosionSFX() => PlaySoundEffect(_explosionSFX[Random.Range(0, _explosionSFX.Length)]);
         public void PlayCreateExplosiveSFX() => PlaySoundEffect(_createExplosiveSFX);
         public void PlayCreateTargetingSFX() => PlaySoundEffect(_createTargetingSFX);
@@ -128,6 +128,27 @@ namespace GroundZero
             PlaySoundEffect(_tickSFX[_currentWarningTick]);
             _currentWarningTick++;
             if (_currentWarningTick >= _tickSFX.Length) _currentWarningTick = 0;
+        }
+        
+        /// <summary>
+        /// Sets the music volume to the given volume in both the audio mixer and save data.
+        /// </summary>
+        /// <param name="volume"></param>
+        public void SetMusicVolume(float volume)
+        {
+            // Convert volume percentage to decibels, which uses a logarithmic scale.
+            _audioMixer.SetFloat("Music Volume", Mathf.Log10(volume) * 20);
+            PlayerPrefs.SetFloat("Music Volume", volume);
+        }
+        
+        /// <summary>
+        /// Sets the SFX volume to the given volume in both the audio mixer and save data.
+        /// </summary>
+        /// <param name="volume"></param>
+        public void SetSFXVolume(float volume)
+        {
+            _audioMixer.SetFloat("SFX Volume", Mathf.Log10(volume) * 20);
+            PlayerPrefs.SetFloat("SFX Volume", volume);
         }
         
         private void SetIntensity(int intensity)

@@ -29,3 +29,84 @@
     scale: 1.05 1.05;
     -unity-background-image-tint-color: rgba(255, 255, 255, 0.78);
 }
+
+.slider {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 16px;
+    margin-left: 0;
+    flex-direction: row;
+    height: 32px;
+    align-items: stretch;
+    justify-content: flex-end;
+}
+
+.slider Label {
+    margin-top: 0;
+    margin-right: 32px;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    -unity-text-align: middle-right;
+    color: rgb(255, 255, 255);
+    -unity-font-definition: url("project://database/Assets/Fonts/Nova_Square/NovaSquare-Regular.ttf?fileID=12800000&guid=8dc96b77b22c240b28d89bd45ab5bd29&type=3#NovaSquare-Regular");
+    font-size: 32px;
+    min-width: auto;
+}
+
+.slider > VisualElement {
+    width: 128px;
+    flex-grow: 0;
+}
+
+.slider #unity-tracker {
+    height: 8px;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    background-color: rgb(255, 255, 255);
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    margin-top: 0;
+    margin-right: 1px;
+    margin-bottom: 0;
+    margin-left: 1px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    translate: 0 -50%;
+}
+
+.slider #unity-dragger {
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/Sprites/Slider%20Handle.png?fileID=21300000&guid=6ba63af5b992d44819b95824f1ee42e3&type=3#Slider Handle");
+    background-color: rgba(0, 0, 0, 0);
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    top: 0;
+    scale: 1 1;
+    transition-property: scale;
+    transition-duration: 0.1s;
+}
+
+.slider #unity-dragger:hover {
+    scale: 1.05 1.05;
+}

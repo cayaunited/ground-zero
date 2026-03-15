@@ -11,6 +11,10 @@ namespace GroundZero
         [Tooltip("How small the menu scale is to start the open animation.")]
         [SerializeField] [Range(0, 1)] private float _menuStartScale;
         [SerializeField] [Min(0)] private float _openMenuDuration;
+        [Tooltip("The music volume if the player hasn't set it yet.")]
+        [SerializeField] [Range(0, 1)] private float _defaultMusicVolume;
+        [Tooltip("The sound effects volume if the player hasn't set it yet.")]
+        [SerializeField] [Range(0, 1)] private float _defaultSFXVolume;
         [SerializeField] private AudioManager _audioManager;
         
         private UIDocument _document;
@@ -18,13 +22,18 @@ namespace GroundZero
         private Label _remainingTextLabel;
         private VisualElement _statusContainer;
         private VisualElement _menuContainer;
+        private VisualElement _settingsContainer;
         private Button _startEndlessButton;
         private Button _startTimedButton;
         private Button _startLimitedMovesButton;
         private Button _endGameButton;
+        private Button _settingsButton;
+        private Slider _musicVolumeSlider;
+        private Slider _sfxVolumeSlider;
         
         private GameMode _mode;
         private float _openMenuTimer;
+        private bool _isSettingsOpen;
         
         private void Update()
         {
@@ -53,16 +62,29 @@ namespace GroundZero
             _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
             _statusContainer = _document.rootVisualElement.Q<VisualElement>("StatusContainer");
             _menuContainer = _document.rootVisualElement.Q<VisualElement>("MainMenu");
+            _settingsContainer = _document.rootVisualElement.Q<VisualElement>("SettingsMenu");
             _startEndlessButton = _document.rootVisualElement.Q<Button>("EndlessButton");
             _startTimedButton = _document.rootVisualElement.Q<Button>("TimedButton");
             _startLimitedMovesButton = _document.rootVisualElement.Q<Button>("LimitedMovesButton");
             _endGameButton = _document.rootVisualElement.Q<Button>("EndGameButton");
+            _settingsButton = _document.rootVisualElement.Q<Button>("SettingsButton");
+            _musicVolumeSlider = _document.rootVisualElement.Q<Slider>("MusicVolume");
+            _sfxVolumeSlider = _document.rootVisualElement.Q<Slider>("SFXVolume");
             
             // Call the given functions whenever the corresponding buttons are clicked.
             _startEndlessButton.clicked += startEndlessGame;
             _startTimedButton.clicked += startTimedGame;
             _startLimitedMovesButton.clicked += startLimitedMovesGame;
             _endGameButton.clicked += endGame;
+            _settingsButton.clicked += ToggleSettingsVisibility;
+            // Set the correct volume whenever the value of the sliders are changed.
+            _musicVolumeSlider.RegisterValueChangedCallback((e) => _audioManager.SetMusicVolume(e.newValue));
+            _sfxVolumeSlider.RegisterValueChangedCallback((e) => _audioManager.SetSFXVolume(e.newValue));
+            
+            // If the volume settings have been saved, load them. Otherwise, give a default.
+            // This will set the actual volume because of the callbacks set above.
+            _musicVolumeSlider.value = PlayerPrefs.GetFloat("Music Volume", _defaultMusicVolume);
+            _sfxVolumeSlider.value = PlayerPrefs.GetFloat("SFX Volume", _defaultSFXVolume);
         }
         
         /// <summary>
@@ -139,6 +161,13 @@ namespace GroundZero
             _menuContainer.style.display = DisplayStyle.Flex;
             _endGameButton.style.display = DisplayStyle.None;
             _openMenuTimer = _openMenuDuration;
+        }
+        
+        private void ToggleSettingsVisibility()
+        {
+            _isSettingsOpen = !_isSettingsOpen;
+            _settingsContainer.style.display = _isSettingsOpen ? DisplayStyle.Flex : DisplayStyle.None;
+            _audioManager.PlaySelectSFX();
         }
     }
 }

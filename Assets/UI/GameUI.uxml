@@ -33,5 +33,12 @@
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
-    <ui:Button text="End Game" name="EndGameButton" class="button" style="position: absolute; bottom: 32px; right: 32px; display: none;"/>
+    <ui:VisualElement name="SettingsContainer" style="position: absolute; bottom: 32px; right: 32px; align-items: flex-end; flex-direction: column-reverse;">
+        <ui:Button text="Settings" name="SettingsButton" class="button" style="display: flex;"/>
+        <ui:VisualElement name="SettingsMenu" style="display: none;">
+            <ui:Slider label="Music&#10;" value="1" high-value="1" name="MusicVolume" low-value="0.0001" class="slider"/>
+            <ui:Slider label="SFX" value="1" high-value="1" name="SFXVolume" low-value="0.0001" class="slider"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Button text="End Game" name="EndGameButton" class="button" style="display: none; position: absolute; right: 214px; bottom: 32px;"/>
 </ui:UXML>

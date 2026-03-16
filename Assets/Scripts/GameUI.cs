@@ -20,6 +20,7 @@ namespace GroundZero
         private UIDocument _document;
         private Label _numberRemainingLabel;
         private Label _remainingTextLabel;
+        private Label _creditsLabel;
         private VisualElement _statusContainer;
         private VisualElement _menuContainer;
         private VisualElement _settingsContainer;
@@ -60,6 +61,7 @@ namespace GroundZero
             _document = GetComponent<UIDocument>();
             _numberRemainingLabel = _document.rootVisualElement.Q<Label>("NumberRemaining");
             _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
+            _creditsLabel = _document.rootVisualElement.Q<Label>("Credits");
             _statusContainer = _document.rootVisualElement.Q<VisualElement>("StatusContainer");
             _menuContainer = _document.rootVisualElement.Q<VisualElement>("MainMenu");
             _settingsContainer = _document.rootVisualElement.Q<VisualElement>("SettingsMenu");
@@ -98,6 +100,7 @@ namespace GroundZero
             _menuContainer.style.display = DisplayStyle.None;
             _statusContainer.style.display = DisplayStyle.Flex;
             _endGameButton.style.display = DisplayStyle.Flex;
+            _creditsLabel.style.display = DisplayStyle.None;
             _numberRemainingLabel.style.color = Color.white;
             
             if (mode == GameMode.Endless)
@@ -160,6 +163,7 @@ namespace GroundZero
         {
             _menuContainer.style.display = DisplayStyle.Flex;
             _endGameButton.style.display = DisplayStyle.None;
+            _creditsLabel.style.display = DisplayStyle.Flex;
             _openMenuTimer = _openMenuDuration;
         }
         

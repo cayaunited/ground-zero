@@ -41,4 +41,5 @@
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:Button text="End Game" name="EndGameButton" class="button" style="display: none; position: absolute; right: 214px; bottom: 32px;"/>
+    <ui:Label text="Audio done by Felx Lamp: x.com/FelxLamp" name="Credits" style="margin-top: 16px; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; color: rgb(255, 255, 255); -unity-font-definition: url(&quot;project://database/Assets/Fonts/Nova_Square/NovaSquare-Regular.ttf?fileID=12800000&amp;guid=8dc96b77b22c240b28d89bd45ab5bd29&amp;type=3#NovaSquare-Regular&quot;); font-size: 24px; white-space: normal; -unity-text-align: middle-center; position: absolute; bottom: 32px; translate: -50% 0; left: 50%;"/>
 </ui:UXML>

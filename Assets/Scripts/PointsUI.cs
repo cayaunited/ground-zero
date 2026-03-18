@@ -16,6 +16,7 @@ namespace GroundZero
         private VisualElement _levelFill;
         private VisualElement _pointsContainer;
         private VisualElement _levelContainer;
+        
         private bool _shouldFadePointIncrease;
         private bool _shouldFadeLevelIncrease;
         private float _pointsFadeInTimer;

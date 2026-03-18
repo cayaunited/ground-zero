@@ -7,7 +7,7 @@ namespace GroundZero
     {
         [SerializeField] [Min(0)] private float _intensityFadeDuration;
         [SerializeField] private float _normalPitch;
-        [Tooltip("The pitch during the last bit of time in a timed game.")]
+        [Tooltip("The pitch during the last chunk of time in a timed game.")]
         [SerializeField] private float _warningPitch;
         [SerializeField] [Min(0)] private float _pitchFadeDuration;
         [Tooltip("The minimum volume an SFX can randomly play at.")]
@@ -18,24 +18,24 @@ namespace GroundZero
         [SerializeField] [Min(0)] private float _minSFXPitch;
         [Tooltip("The maximum pitch an SFX can randomly play at.")]
         [SerializeField] [Min(0)] private float _maxSFXPitch;
+        
         [SerializeField] private AudioSource[] _backgroundMusicSources;
         [SerializeField] private AudioSource _soundEffectsSource;
         [SerializeField] private AudioMixer _audioMixer;
         [SerializeField] private AudioClip _selectSFX;
         [SerializeField] private AudioClip _selectErrorSFX;
         [SerializeField] private AudioClip _swapSFX;
+        [SerializeField] private AudioClip _dropSFX;
+        [SerializeField] private AudioClip _endDropSFX;
         [SerializeField] private AudioClip _scoreSFX;
         [SerializeField] private AudioClip _levelUpSFX;
-        [SerializeField] private AudioClip _startGameSFX;
-        [SerializeField] private AudioClip _endGameSFX;
-        [SerializeField] private AudioClip _warningSFX;
-        [SerializeField] private AudioClip[] _tickSFX;
-        [SerializeField] private AudioClip[] _explosionSFX;
         [SerializeField] private AudioClip _createExplosiveSFX;
         [SerializeField] private AudioClip _createTargetingSFX;
         [SerializeField] private AudioClip _refillGridSFX;
-        [SerializeField] private AudioClip _dropSFX;
-        [SerializeField] private AudioClip _endDropSFX;
+        [SerializeField] private AudioClip _warningSFX;
+        [SerializeField] private AudioClip _endGameSFX;
+        [SerializeField] private AudioClip[] _tickSFX;
+        [SerializeField] private AudioClip[] _explosionSFX;
         
         private int _currentIntensity;
         private int _nextIntensity;
@@ -48,7 +48,7 @@ namespace GroundZero
         private float _targetPitch;
         private int _currentWarningTick;
         
-        private void Awake()
+        private void Start()
         {
             _pitch = _normalPitch;
             

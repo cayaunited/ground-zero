@@ -21,6 +21,7 @@ namespace GroundZero
         private Label _numberRemainingLabel;
         private Label _remainingTextLabel;
         private Label _creditsLabel;
+        private Label _instructionsLabel;
         private VisualElement _statusContainer;
         private VisualElement _menuContainer;
         private VisualElement _settingsContainer;
@@ -35,11 +36,14 @@ namespace GroundZero
         private GameMode _mode;
         private float _openMenuTimer;
         private bool _isSettingsOpen;
+        private bool _wereInstructionsShown;
         
         private void Update()
         {
             if (!Mathf.Approximately(_openMenuTimer, 0))
             {
+                // Since we are counting down from the top of the timer to zero,
+                // the time percentage we pass to the lerp method needs to be subtracted from one.
                 _openMenuTimer = Mathf.Max(_openMenuTimer - Time.deltaTime, 0);
                 _menuContainer.style.opacity = Vector2.Lerp(new Vector2(0, 0), new Vector2(1, 0), 1 - _openMenuTimer / _openMenuDuration).x;
                 var scale = Vector2.Lerp(new Vector2(_menuStartScale, 0), new Vector2(1, 0), 1 - _openMenuTimer / _openMenuDuration).x;
@@ -59,19 +63,21 @@ namespace GroundZero
         {
             if (_document) return;
             _document = GetComponent<UIDocument>();
-            _numberRemainingLabel = _document.rootVisualElement.Q<Label>("NumberRemaining");
-            _remainingTextLabel = _document.rootVisualElement.Q<Label>("RemainingText");
-            _creditsLabel = _document.rootVisualElement.Q<Label>("Credits");
-            _statusContainer = _document.rootVisualElement.Q<VisualElement>("StatusContainer");
-            _menuContainer = _document.rootVisualElement.Q<VisualElement>("MainMenu");
-            _settingsContainer = _document.rootVisualElement.Q<VisualElement>("SettingsMenu");
-            _startEndlessButton = _document.rootVisualElement.Q<Button>("EndlessButton");
-            _startTimedButton = _document.rootVisualElement.Q<Button>("TimedButton");
-            _startLimitedMovesButton = _document.rootVisualElement.Q<Button>("LimitedMovesButton");
-            _endGameButton = _document.rootVisualElement.Q<Button>("EndGameButton");
-            _settingsButton = _document.rootVisualElement.Q<Button>("SettingsButton");
-            _musicVolumeSlider = _document.rootVisualElement.Q<Slider>("MusicVolume");
-            _sfxVolumeSlider = _document.rootVisualElement.Q<Slider>("SFXVolume");
+            var rootVisualElement = _document.rootVisualElement;
+            _numberRemainingLabel = rootVisualElement.Q<Label>("NumberRemaining");
+            _remainingTextLabel = rootVisualElement.Q<Label>("RemainingText");
+            _creditsLabel = rootVisualElement.Q<Label>("Credits");
+            _instructionsLabel = rootVisualElement.Q<Label>("Instructions");
+            _statusContainer = rootVisualElement.Q<VisualElement>("StatusContainer");
+            _menuContainer = rootVisualElement.Q<VisualElement>("MainMenu");
+            _settingsContainer = rootVisualElement.Q<VisualElement>("SettingsMenu");
+            _startEndlessButton = rootVisualElement.Q<Button>("EndlessButton");
+            _startTimedButton = rootVisualElement.Q<Button>("TimedButton");
+            _startLimitedMovesButton = rootVisualElement.Q<Button>("LimitedMovesButton");
+            _endGameButton = rootVisualElement.Q<Button>("EndGameButton");
+            _settingsButton = rootVisualElement.Q<Button>("SettingsButton");
+            _musicVolumeSlider = rootVisualElement.Q<Slider>("MusicVolume");
+            _sfxVolumeSlider = rootVisualElement.Q<Slider>("SFXVolume");
             
             // Call the given functions whenever the corresponding buttons are clicked.
             _startEndlessButton.clicked += startEndlessGame;
@@ -79,10 +85,10 @@ namespace GroundZero
             _startLimitedMovesButton.clicked += startLimitedMovesGame;
             _endGameButton.clicked += endGame;
             _settingsButton.clicked += ToggleSettingsVisibility;
+            
             // Set the correct volume whenever the value of the sliders are changed.
             _musicVolumeSlider.RegisterValueChangedCallback((e) => _audioManager.SetMusicVolume(e.newValue));
             _sfxVolumeSlider.RegisterValueChangedCallback((e) => _audioManager.SetSFXVolume(e.newValue));
-            
             // If the volume settings have been saved, load them. Otherwise, give a default.
             // This will set the actual volume because of the callbacks set above.
             _musicVolumeSlider.value = PlayerPrefs.GetFloat("Music Volume", _defaultMusicVolume);
@@ -102,6 +108,13 @@ namespace GroundZero
             _endGameButton.style.display = DisplayStyle.Flex;
             _creditsLabel.style.display = DisplayStyle.None;
             _numberRemainingLabel.style.color = Color.white;
+            
+            // Make sure the instructions are only shown once every time the game is opened.
+            if (!_wereInstructionsShown)
+            {
+                _wereInstructionsShown = true;
+                _instructionsLabel.style.display = DisplayStyle.Flex;
+            }
             
             if (mode == GameMode.Endless)
             {
@@ -164,8 +177,11 @@ namespace GroundZero
             _menuContainer.style.display = DisplayStyle.Flex;
             _endGameButton.style.display = DisplayStyle.None;
             _creditsLabel.style.display = DisplayStyle.Flex;
+            _instructionsLabel.style.display = DisplayStyle.None;
             _openMenuTimer = _openMenuDuration;
         }
+        
+        public void HideInstructions() => _instructionsLabel.style.display = DisplayStyle.None;
         
         private void ToggleSettingsVisibility()
         {

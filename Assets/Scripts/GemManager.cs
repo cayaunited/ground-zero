@@ -218,6 +218,9 @@ namespace GroundZero
                 _isAGemSelected = false;
                 _selectionCursor.gameObject.SetActive(false);
             }
+            
+            // Once selection or swapping occurs, hide the instructions if they are still visible.
+            _gameUI.HideInstructions();
         }
         
         /// <summary>

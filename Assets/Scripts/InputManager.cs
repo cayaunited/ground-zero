@@ -55,7 +55,6 @@ namespace GroundZero
             // If the player is using swipe controls to swap gems, we need to know where that swipe started,
             // which is going to be the position of their mouse when they started pressing the button.
             if (context.started) _swipeStartPosition = _mouseScreenPosition;
-            
             // If the input event was just canceled, that means the player just released the mouse button.
             // Therefore, we should try swapping the gems at both the position where they started pressing the button,
             // and the position where they stopped pressing the button.

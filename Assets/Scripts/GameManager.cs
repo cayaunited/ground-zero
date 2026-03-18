@@ -77,11 +77,6 @@ namespace GroundZero
             _audioManager.OnGameEnded();
         }
         
-        /// <summary>
-        /// If the gems are done falling and matching, and the game mode is timed,
-        /// then ends the game if the timer is done, and returns true. Otherwise, returns false.
-        /// </summary>
-        /// <returns>Returns true if the game ended.</returns>
         private bool OnDoneMatching()
         {
             var shouldEnd = _mode == GameMode.Timed && Mathf.Approximately(_gameTimer, 0);
@@ -89,11 +84,6 @@ namespace GroundZero
             return shouldEnd;
         }
         
-        /// <summary>
-        /// If there's no moves left, and the game mode is limited moves,
-        /// then ends the game and returns true. Otherwise, returns false.
-        /// </summary>
-        /// <returns>Returns true if the game ended.</returns>
         private bool OnNoMovesLeft()
         {
             var shouldEnd = _mode == GameMode.LimitedMoves;

@@ -25,9 +25,11 @@ namespace GroundZero
             if (!_label) _label = GetComponent<TextMeshPro>();
             _label.text = $"{amount}";
             _label.alpha = 1;
+            
             transform.position = position;
             transform.localScale = new Vector3(0, 0, 1);
             gameObject.SetActive(true);
+            
             _scaleTimer = 0;
             _fadeTimer = 0;
             _recycleEffect = recycleEffect;

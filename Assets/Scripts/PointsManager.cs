@@ -11,6 +11,7 @@ namespace GroundZero
         [SerializeField] private int _startingPointsPerLevel;
         [Tooltip("The amount to increase the number of points needed per level every time the level increases.")]
         [SerializeField] private int _additionalPointsPerLevel;
+        
         [SerializeField] private PointsEffect _effectPrefab;
         [SerializeField] private PointsUI _pointsUI;
         [SerializeField] private AudioManager _audioManager;
@@ -18,17 +19,11 @@ namespace GroundZero
         private int _score;
         private float _scoreMultiplier = 1;
         private int _level = 1;
-        /// <summary>
-        /// How many points were gained in the current level.
-        /// </summary>
         private int _scoreInLevel;
         private int _pointsPerLevel;
         private readonly List<PointsEffect> _activeEffects = new();
         private readonly Stack<PointsEffect> _inactiveEffects = new();
         
-        /// <summary>
-        /// Updates any animations.
-        /// </summary>
         private void Update()
         {
             for (int i = _activeEffects.Count - 1; i >= 0; i--)
@@ -104,20 +99,11 @@ namespace GroundZero
             else _audioManager.PlayScoreSFX();
         }
         
-        public void IncreaseMultiplier()
-        {
-            _scoreMultiplier += _scoreMultiplierIncrementAmount;
-        }
+        public void IncreaseMultiplier() => _scoreMultiplier += _scoreMultiplierIncrementAmount;
+        public void ResetMultiplier() => _scoreMultiplier = 1;
         
-        public void ResetMultiplier()
-        {
-            _scoreMultiplier = 1;
-        }
-        
-        private PointsEffect GetEffect()
-        {
-            return _inactiveEffects.Count > 0 ? _inactiveEffects.Pop() : Instantiate(_effectPrefab);
-        }
+        private PointsEffect GetEffect() => _inactiveEffects.Count > 0
+            ? _inactiveEffects.Pop() : Instantiate(_effectPrefab);
         
         private void RecycleEffect(PointsEffect effect)
         {

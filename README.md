@@ -1,9 +1,7 @@
 # Ground Zero
 Welcome to Ground Zero: a simple, open-source, match three game designed to help teach people how to develop games.
 
-This game can be played on desktop or mobile in the browser, although playing it in mobile only allows for tapping to select gems.
-You can't swipe to swap gems on mobile due to limitations with the Unity Input System / WebGL.
-Also, only landscape orientation is supported.
+This game can be played on desktop in the browser. While landscape mobile is mostly supported, the limitations in Unity WebGL builds on mobile mean the music doesn't perfectly loop and it just sounds awful in the last 30 seconds of the timed mode due to the variation in pitch.
 
 Audio done by Felx Lamp: https://x.com/felxlamp
 

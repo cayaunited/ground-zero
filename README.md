@@ -5,4 +5,6 @@ This game can be played on desktop or mobile in the browser, although playing it
 You can't swipe to swap gems on mobile due to limitations with the Unity Input System / WebGL.
 Also, only landscape orientation is supported.
 
+Audio done by Felx Lamp: https://x.com/felxlamp
+
 Play the game at https://cayaunited.itch.io/ground-zero

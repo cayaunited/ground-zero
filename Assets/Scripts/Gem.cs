@@ -267,6 +267,8 @@ namespace GroundZero
                 _isShrinking = true;
                 _shrinkTimer = 0;
             }
+            
+            _shineEffect.gameObject.SetActive(false);
         }
         
         /// <summary>

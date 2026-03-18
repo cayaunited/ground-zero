@@ -23,6 +23,7 @@
     transition-property: scale;
     transition-duration: 0.1s;
     -unity-background-image-tint-color: rgb(255, 255, 255);
+    -unity-slice-scale: 0.1875px;
 }
 
 .button:hover {
